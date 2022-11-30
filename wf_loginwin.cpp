@@ -29,7 +29,7 @@ WF_LoginWin::WF_LoginWin(QWidget *parent, QSize* frameSize)
     if (screen_number < 0) screen_number = 0;
     QSize mainMonitorSize = QGuiApplication::screens().at(screen_number)->geometry().size();
 
-    QString SelfIconPath = WF_DIR + "\\Data\\Self.jpg";
+    QString SelfIconPath = WF_DIR + "\\Self.jpg";
     if (QFile(SelfIconPath).exists()) {
         UserIconUrl = SelfIconPath;
     } else {
@@ -39,7 +39,7 @@ WF_LoginWin::WF_LoginWin(QWidget *parent, QSize* frameSize)
 
     QString readRet;
     QStringList ConfigRetList;
-    QString WF_ConfigPath = WF_DIR + "\\Data\\Config";
+    QString WF_ConfigPath = WF_DIR + "\\Config";
     wf_config_file_ = new QFile(WF_ConfigPath);
     if (wf_config_file_->exists()) {
         wf_config_file_->open(QIODevice::ReadOnly);
@@ -78,7 +78,6 @@ WF_LoginWin::WF_LoginWin(QWidget *parent, QSize* frameSize)
         LineInput->setGeometry((frameSize_->width() - 115) / 2, 150, 115, 25);
         LineInput->setPlaceholderText("Name");
         LineInput->setFont(QFont("Microsoft Yahei", 13));
-        wf_config_file_->open(QIODevice::WriteOnly|QIODevice::Text|QIODevice::Append);
     }
 
     LoginButton = new QPushButton(this);
@@ -87,7 +86,8 @@ WF_LoginWin::WF_LoginWin(QWidget *parent, QSize* frameSize)
     LoginButton->setText("进入微娱");
     LoginButton->setStyleSheet("background: rgb(7, 193, 96); border-radius:4px; color:rgb(255, 255, 255);outset;");
     connect(LoginButton, &QPushButton::clicked, [=] {
-        if (wf_config_file_->isOpen() && LineInput != nullptr) {
+        if (LineInput != nullptr) {
+            wf_config_file_->open(QIODevice::WriteOnly|QIODevice::Text|QIODevice::Append);
             QString StrToWrite = "<>HOSTNAME<>" + LineInput->text() + "<>\n";
             wf_config_file_->write(StrToWrite.toUtf8());
             StrToWrite = "<>SERVER<>103.46.128.53<>55817<>";
