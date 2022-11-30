@@ -1,0 +1,9 @@
+<RCC>
+    <qresource prefix="/">
+        <file>Res/grayMinimize.png</file>
+        <file>Res/RedClose.png</file>
+        <file>Res/whiteClose.png</file>
+        <file>Res/whiteMinimize.png</file>
+        <file>Res/Tomphany.jpg</file>
+    </qresource>
+</RCC>
