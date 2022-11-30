@@ -75,7 +75,7 @@ WF_MainWin::WF_MainWin(QWidget *parent, WF_TcpSocket *TcpSocket, QString UserIco
     connect(SendButton, SIGNAL(clicked()), this, SLOT(Send()));
     connect(ChatInput, SIGNAL(SendByKeySig()), this, SLOT(Send()));
     connect(tcp, SIGNAL(myid(int)), FriendList, SLOT(MyID(int)));
-    connect(tcp, &WF_TcpSocket::myid, [=](int MyIDinGroup) {myId_ = MyIDinGroup; NameLabel->setText("Tomphany"); qDebug() << "MainWin Get MyID:" << myId_;});
+    connect(tcp, &WF_TcpSocket::myid, [=](int MyIDinGroup) {myId_ = MyIDinGroup; NameLabel->setText("Group"); qDebug() << "MainWin Get MyID:" << myId_;});
     connect(tcp, SIGNAL(sayhello(int, QString, QPixmap)), FriendList, SLOT(SayHello(int, QString, QPixmap)));
     connect(tcp, SIGNAL(online(int, QString, QPixmap)), FriendList, SLOT(Online(int, QString, QPixmap)));
     connect(tcp, SIGNAL(offline(int, QString)), FriendList, SLOT(Offline(int, QString)));

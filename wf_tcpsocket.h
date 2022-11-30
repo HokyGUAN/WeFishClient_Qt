@@ -19,7 +19,7 @@ class WF_TcpSocket : public QTcpSocket
 {
     Q_OBJECT
 public:
-    WF_TcpSocket(QString name, QString userIconUrl);
+    WF_TcpSocket(QString name, QString userIconUrl, QString ip, int port);
     ~WF_TcpSocket();
 
     void socketSetup();
@@ -40,6 +40,8 @@ signals:
 
 private:
     QString userIconUrl_;
+    QString ip_;
+    int port_;
     QString rest_msg_;
 
     WF_TcpSocket* TcpSocket;

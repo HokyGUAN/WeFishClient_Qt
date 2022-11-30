@@ -26,6 +26,8 @@ public:
 private:
     QSize* frameSize_;
     QString host_name_;
+    QString ip_;
+    int port_;
     QFile* wf_config_file_;
 
     QPixmap* UserIcon;

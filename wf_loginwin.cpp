@@ -37,15 +37,34 @@ WF_LoginWin::WF_LoginWin(QWidget *parent, QSize* frameSize)
     }
     UserIcon = new QPixmap(UserIconUrl);
 
+    QString readRet;
+    QStringList ConfigRetList;
     QString WF_ConfigPath = WF_DIR + "\\Data\\Config";
     wf_config_file_ = new QFile(WF_ConfigPath);
     if (wf_config_file_->exists()) {
         wf_config_file_->open(QIODevice::ReadOnly);
-        QDataStream dataStream(wf_config_file_);
-        dataStream >> host_name_;
+        while (wf_config_file_->atEnd() == false) {
+           readRet = wf_config_file_->readLine();
+           if(readRet.contains("<>HOSTNAME<>",Qt::CaseSensitive)) {
+               ConfigRetList = readRet.split("<>", QString::SkipEmptyParts);
+               if (ConfigRetList.size() > 1) {
+                   host_name_ = ConfigRetList.at(1);
+               }
+           }
+           if(readRet.contains("<>SERVER<>",Qt::CaseSensitive)) {
+               ConfigRetList = readRet.split("<>", QString::SkipEmptyParts);
+               if (ConfigRetList.size() > 2) {
+                   ip_ = ConfigRetList.at(1);
+                   port_ = ConfigRetList.at(2).toInt();
+               } else {
+                   ip_ = "103.46.128.53";
+                   port_ = 55817;
+               }
+           }
+        }
         wf_config_file_->close();
-        host_name_ = host_name_.split(":", QString::SkipEmptyParts).at(1);
         qDebug() << "Succeed to Read Config HostName:" + host_name_;
+        qDebug() << "Server Address:" + ip_ + "-" + QString::number(port_);
         QFont nameFont("Microsoft Yahei", 16);
         QFontMetrics font_matrics(nameFont);
         int name_width = font_matrics.width(host_name_);
@@ -59,7 +78,7 @@ WF_LoginWin::WF_LoginWin(QWidget *parent, QSize* frameSize)
         LineInput->setGeometry((frameSize_->width() - 115) / 2, 150, 115, 25);
         LineInput->setPlaceholderText("Name");
         LineInput->setFont(QFont("Microsoft Yahei", 13));
-        wf_config_file_->open(QIODevice::ReadWrite);
+        wf_config_file_->open(QIODevice::WriteOnly|QIODevice::Text|QIODevice::Append);
     }
 
     LoginButton = new QPushButton(this);
@@ -69,13 +88,17 @@ WF_LoginWin::WF_LoginWin(QWidget *parent, QSize* frameSize)
     LoginButton->setStyleSheet("background: rgb(7, 193, 96); border-radius:4px; color:rgb(255, 255, 255);outset;");
     connect(LoginButton, &QPushButton::clicked, [=] {
         if (wf_config_file_->isOpen() && LineInput != nullptr) {
-            QDataStream dataStream(wf_config_file_);
-            dataStream << QString("HostName:" + LineInput->text());
+            QString StrToWrite = "<>HOSTNAME<>" + LineInput->text() + "<>\n";
+            wf_config_file_->write(StrToWrite.toUtf8());
+            StrToWrite = "<>SERVER<>103.46.128.53<>55817<>";
+            wf_config_file_->write(StrToWrite.toUtf8());
             host_name_ = LineInput->text();
+            ip_ = "103.46.128.53";
+            port_ = 55817;
             wf_config_file_->close();
         }
         if (host_name_ != "") {
-            this->TcpSocket = new WF_TcpSocket(host_name_, UserIconUrl);
+            this->TcpSocket = new WF_TcpSocket(host_name_, UserIconUrl, ip_, port_);
             MainWin = new WF_MainWin(this, this->TcpSocket, UserIconUrl);
             MainWin->setGeometry((mainMonitorSize.width() - mainWinSize.width()) / 2,
                                  (mainMonitorSize.height() - mainWinSize.height()) / 2,

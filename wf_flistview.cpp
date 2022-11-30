@@ -68,7 +68,7 @@ WF_FriendListView::WF_FriendListView(QWidget *parent, QString name)
     UserItemData ItemData;
     ItemData.Available = true;
     ItemData.Pic = QPixmap(":/Res/Tomphany.jpg");
-    ItemData.Name = "Tomphany";
+    ItemData.Name = "Group";
     ItemData.ID = 0;
     this->AddFriend(ItemData);
     currentFriendItem_ = ItemData;

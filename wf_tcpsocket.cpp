@@ -7,9 +7,11 @@
 ***********************************/
 #include "wf_tcpsocket.h"
 
-WF_TcpSocket::WF_TcpSocket(QString name, QString userIconUrl)
+WF_TcpSocket::WF_TcpSocket(QString name, QString userIconUrl, QString ip, int port)
     : name_(name)
     , userIconUrl_(userIconUrl)
+    , ip_(ip)
+    , port_(port)
     , rest_msg_("")
 {
     socketSetup();
@@ -28,8 +30,7 @@ void WF_TcpSocket::socketSetup()
     connect(socket, &QTcpSocket::connected, this, &WF_TcpSocket::doConnect);
     connect(socket, &QTcpSocket::readyRead, this, &WF_TcpSocket::doRead);
 
-    socket->connectToHost(QHostAddress("103.46.128.53"), 55817);
-    //socket->connectToHost(QHostAddress("10.13.3.32"), 7070);
+    socket->connectToHost(QHostAddress(ip_), port_);
 }
 
 void WF_TcpSocket::doMessageReceived(QString const &msg)
