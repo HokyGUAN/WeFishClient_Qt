@@ -221,21 +221,13 @@ void WF_MainWin::PictureBrowser(QPixmap pic)
     PicBrowserWin->setWindowTitle("WeFish Photo Browser");
     PicBrowserWin->setWindowIcon(QIcon(QPixmap(":/Res/Tomphany.jpg")));
 
-    QLabel* picLabel = new QLabel(PicBrowserWin);
-    QSize LabelFrameSize(qRound(ActivateMonitorSize.width() * 0.8), qRound(ActivateMonitorSize.height()* 0.8));
-    picLabel->setGeometry((ActivateMonitorSize.width() * 0.2) / 2,
-                          (ActivateMonitorSize.height()* 0.1) / 2,
-                           LabelFrameSize.width(),
-                           LabelFrameSize.height());
-    picLabel->setAlignment(Qt::AlignCenter);
-    if (pic.width() >= LabelFrameSize.width() || pic.height() >= LabelFrameSize.height()) {
-        double rate = 0.95;
-        while (rate > 0 && (qRound(pic.width() * rate) >= LabelFrameSize.width() || qRound(pic.height() * rate) >= LabelFrameSize.height())) {
-            rate -= 0.05;
-        }
-        picLabel->setPixmap(pic.scaled(pic.width() * rate, pic.height() * rate, Qt::KeepAspectRatio, Qt::SmoothTransformation));
-    } else {
-        picLabel->setPixmap(pic.scaled(pic.width(), pic.height(), Qt::KeepAspectRatio, Qt::SmoothTransformation));
-    }
+    WF_Browser* picBrowser = new WF_Browser(PicBrowserWin);
+    QSize LabelFrameSize(ActivateMonitorSize.width() * 0.9, ActivateMonitorSize.height() * 0.85);
+    picBrowser->setAlignment(Qt::AlignCenter);
+    picBrowser->setGeometry(ActivateMonitorSize.width() * 0.05,
+                            ActivateMonitorSize.height() * 0.05,
+                            LabelFrameSize.width(),
+                            LabelFrameSize.height());
+    picBrowser->SetQpixmap(pic);
     PicBrowserWin->show();
 }

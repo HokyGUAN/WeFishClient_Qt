@@ -16,6 +16,7 @@
 #include "wf_chatinput.h"
 #include "wf_button.h"
 #include "wf_tcpsocket.h"
+#include "wf_browser.h"
 #include "wf_misc.h"
 
 class WF_MainWin : public QWidget
