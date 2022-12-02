@@ -31,14 +31,20 @@ protected:
     void mousePressEvent(QMouseEvent *event) {
         if (event->button() == Qt::LeftButton) {
             QPoint startPos = event->globalPos();
-            offset_ = startPos - geometry().topLeft();
+            QPoint limitRegion = mapFromGlobal(startPos);
+            if (limitRegion.ry() < 50) {
+                offset_ = startPos - geometry().topLeft();
+            }
         }
         QWidget::mousePressEvent(event);
     };
     void mouseMoveEvent(QMouseEvent *event) {
         if (event->buttons() == Qt::LeftButton) {
             QPoint endPos = event->globalPos();
-            move(endPos - offset_);
+            QPoint limitRegion = mapFromGlobal(endPos);
+            if (limitRegion.ry() < 50) {
+                move(endPos - offset_);
+            }
         }
         QWidget::mouseMoveEvent(event);
     };

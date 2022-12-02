@@ -70,9 +70,8 @@ void WF_HeadIcon::ChangeIcon()
 {
     Image_Path = QFileDialog::getOpenFileName(this,"Choose Icon","",
                                                   "*Image Files(*.jpg;*.png;*.bmp);;All(*.*)");
-    //qDebug() << Image_Path;
     QPixmap icon(Image_Path);
-    icon.save(WF_DIR + "\\Data\\Self.jpg");
+    icon.save(WF_DIR + "\\Self.jpg");
 
     this->setPixmap(icon.scaled(40, 40));
 

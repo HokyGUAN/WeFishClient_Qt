@@ -110,19 +110,21 @@ void WF_MainWin::paintEvent(QPaintEvent *event)
 void WF_MainWin::Send()
 {
     if (ChatInput->toPlainText() != NULL) {
-        QString msg;
-        QString pic_msg;
+        QString msg = "";
+        QString pic_msg = "";
         QString content_type = "Content";
         QTextDocument *doc = ChatInput->document();
         QTextBlock block = doc->begin();
         QTextCharFormat fmt = block.begin().fragment().charFormat();
         if (fmt.isImageFormat()) {
             content_type = "PicContent";
-            QString path = fmt.toImageFormat().name().split("///")[1];
+            if (fmt.toImageFormat().name().split("///").size() > 1) {
+                QString path = fmt.toImageFormat().name().split("///")[1];
 
-            QByteArray byteArray = ImageHandler->ImageToBase64(path);
-            msg = byteArray.data();
-            pic_msg = byteArray.data();
+                QByteArray byteArray = ImageHandler->ImageToBase64(path);
+                msg = byteArray.data();
+                pic_msg = byteArray.data();
+            }
         } else {
             msg = ChatInput->toPlainText();
         }
@@ -130,27 +132,28 @@ void WF_MainWin::Send()
         myItemdata_ = FriendList->GetFriend(myId_);
         UserItemData Friend = FriendList->GetFriend(currentItemId_);
         int FriendindexInList = FriendList->GetItemIndexInList(currentItemId_);
-        Friend.HistoryMsg.push_back(myItemdata_.Name + ":" + content_type + ":" + msg);
-        FriendList->SetFriend(FriendindexInList, Friend);
+        if (msg != "") {
+            Friend.HistoryMsg.push_back(myItemdata_.Name + ":" + content_type + ":" + msg);
+            FriendList->SetFriend(FriendindexInList, Friend);
 
-        //Json Msg
-        jsonrpcpp::request_ptr request(nullptr);
-        request.reset(new jsonrpcpp::Request(jsonrpcpp::Id(MESSAGE_TYPE_CONTENT), content_type.toStdString(), \
-                                             jsonrpcpp::Parameter("IDinGroup", myId_, \
-                                                                  "Who", myItemdata_.Name.toUtf8(), \
-                                                                  "ToID", currentItem_.ID, \
-                                                                  "Content", msg.toUtf8())));
-        msg = QString(request->to_json().dump().data());
+            jsonrpcpp::request_ptr request(nullptr);
+            request.reset(new jsonrpcpp::Request(jsonrpcpp::Id(MESSAGE_TYPE_CONTENT), content_type.toStdString(), \
+                                                 jsonrpcpp::Parameter("IDinGroup", myId_, \
+                                                                      "Who", myItemdata_.Name.toUtf8(), \
+                                                                      "ToID", currentItem_.ID, \
+                                                                      "Content", msg.toUtf8())));
+            msg = QString(request->to_json().dump().data());
 
-        QByteArray byteArray = msg.toUtf8();
-        byteArray = byteArray.toBase64();
-        msg = byteArray + "\r\n";
-        tcp->socket->write(msg.toUtf8());
+            QByteArray byteArray = msg.toUtf8();
+            byteArray = byteArray.toBase64();
+            msg = byteArray + "\r\n";
+            tcp->socket->write(msg.toUtf8());
 
-        if (content_type == "PicContent") {
-            ChatView->AppendSelfMessage(myItemdata_.Pic, pic_msg, true);
-        } else {
-            ChatView->AppendSelfMessage(myItemdata_.Pic, ChatInput->toPlainText(), false);
+            if (content_type == "PicContent") {
+                ChatView->AppendSelfMessage(myItemdata_.Pic, pic_msg, true);
+            } else {
+                ChatView->AppendSelfMessage(myItemdata_.Pic, ChatInput->toPlainText(), false);
+            }
         }
         ChatInput->clear();
     }
@@ -165,34 +168,44 @@ void WF_MainWin::Flush(UserItemData itemdata)
     QString exact_name;
     UserItemData tmpItemdata;
     UserItemData myItemdata = FriendList->GetFriend(myId_);
+
+    //qDebug() << "MyID:" << myItemdata.ID << " MyName:" << myItemdata.Name;
     //qDebug() << __FUNCTION__ << ": " << itemdata.ID << "-" << itemdata.Name;
     for (auto msg : itemdata.HistoryMsg) {
-        QString sender_name = msg.split(":", QString::SkipEmptyParts).at(0);
-        QString content_type = msg.split(":", QString::SkipEmptyParts).at(1);
-        QString content = msg.split(":", QString::SkipEmptyParts).at(2);
-
-        tmpItemdata = FriendList->GetFriend(sender_name);
-
-        if (itemdata.ID == 0) {
-            exact_name = sender_name;
-        } else {
-            exact_name = "";
+        QString sender_name = "";
+        QString content_type = "";
+        QString content = "";
+        QStringList savedContent = msg.split(":", QString::SkipEmptyParts);
+        if (savedContent.size() == 3) {
+            sender_name = savedContent.at(0);
+            content_type = savedContent.at(1);
+            content = savedContent.at(2);
         }
 
-        if (sender_name != myItemdata.Name) {
-            if (content_type == "PicContent") {
-                this->ChatView->AppendOtherMessage(tmpItemdata.Pic, exact_name, content, true);
+        //qDebug() << "SenderName:" << sender_name << " Content:" << content;
+        if (sender_name != "" && content_type != "" && content != "") {
+            tmpItemdata = FriendList->GetFriend(sender_name);
+
+            if (itemdata.ID == 0) {
+                exact_name = sender_name;
             } else {
-                this->ChatView->AppendOtherMessage(tmpItemdata.Pic, exact_name, content, false);
+                exact_name = "";
             }
-        } else {
-            if (content_type == "PicContent") {
-                this->ChatView->AppendSelfMessage(myItemdata.Pic, content, true);
+
+            if (sender_name != myItemdata.Name) {
+                if (content_type == "PicContent") {
+                    this->ChatView->AppendOtherMessage(tmpItemdata.Pic, exact_name, content, true);
+                } else {
+                    this->ChatView->AppendOtherMessage(tmpItemdata.Pic, exact_name, content, false);
+                }
             } else {
-                this->ChatView->AppendSelfMessage(myItemdata.Pic, content, false);
+                if (content_type == "PicContent") {
+                    this->ChatView->AppendSelfMessage(myItemdata.Pic, content, true);
+                } else {
+                    this->ChatView->AppendSelfMessage(myItemdata.Pic, content, false);
+                }
             }
         }
-
     }
 }
 

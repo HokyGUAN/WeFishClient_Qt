@@ -29,6 +29,7 @@ private:
     QString ip_;
     int port_;
     QFile* wf_config_file_;
+    bool configFileExist_;
 
     QPixmap* UserIcon;
     QString UserIconUrl;

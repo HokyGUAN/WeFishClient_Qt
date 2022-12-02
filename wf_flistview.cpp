@@ -194,13 +194,13 @@ void WF_FriendListView::Notify(int sender_id, QString sender_name, int to_id, QS
     } else {
         if (content_type == "Content") {
             if (sender_name == hostName_) {
-                emit AddSelfMessageSig(QPixmap(WF_DIR + "\\Data\\Self.jpg"), content, false);
+                emit AddSelfMessageSig(QPixmap(WF_DIR + "\\Self.jpg"), content, false);
             } else {
                 emit AddOthersMessageSig(senderItemdata.Pic, nameInMsg, content, false);
             }
         } else if (content_type == "PicContent") {
             if (sender_name == hostName_) {
-                emit AddSelfMessageSig(QPixmap(WF_DIR + "\\Data\\Self.jpg"), content, true);
+                emit AddSelfMessageSig(QPixmap(WF_DIR + "\\Self.jpg"), content, true);
             } else {
                 emit AddOthersMessageSig(senderItemdata.Pic, nameInMsg, content, true);
             }

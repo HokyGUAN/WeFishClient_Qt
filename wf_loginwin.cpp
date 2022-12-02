@@ -42,14 +42,14 @@ WF_LoginWin::WF_LoginWin(QWidget *parent, QSize* frameSize)
     QString WF_ConfigPath = WF_DIR + "\\Config";
     wf_config_file_ = new QFile(WF_ConfigPath);
     if (wf_config_file_->exists()) {
+        configFileExist_ = true;
+
         wf_config_file_->open(QIODevice::ReadOnly);
         while (wf_config_file_->atEnd() == false) {
            readRet = wf_config_file_->readLine();
            if(readRet.contains("<>HOSTNAME<>",Qt::CaseSensitive)) {
                ConfigRetList = readRet.split("<>", QString::SkipEmptyParts);
-               if (ConfigRetList.size() > 1) {
-                   host_name_ = ConfigRetList.at(1);
-               }
+               if (ConfigRetList.size() > 1) host_name_ = ConfigRetList.at(1);
            }
            if(readRet.contains("<>SERVER<>",Qt::CaseSensitive)) {
                ConfigRetList = readRet.split("<>", QString::SkipEmptyParts);
@@ -74,6 +74,7 @@ WF_LoginWin::WF_LoginWin(QWidget *parent, QSize* frameSize)
         NameLabel->setFont(nameFont);
         NameLabel->setText(host_name_);
     } else {
+        configFileExist_ = false;
         LineInput = new QLineEdit(this);
         LineInput->setGeometry((frameSize_->width() - 115) / 2, 150, 115, 25);
         LineInput->setPlaceholderText("Name");
@@ -85,8 +86,9 @@ WF_LoginWin::WF_LoginWin(QWidget *parent, QSize* frameSize)
     LoginButton->setFont(QFont("Microsoft Yahei", 11));
     LoginButton->setText("进入微娱");
     LoginButton->setStyleSheet("background: rgb(7, 193, 96); border-radius:4px; color:rgb(255, 255, 255);outset;");
+
     connect(LoginButton, &QPushButton::clicked, [=] {
-        if (LineInput != nullptr) {
+        if (configFileExist_ == false) {
             wf_config_file_->open(QIODevice::WriteOnly|QIODevice::Text|QIODevice::Append);
             QString StrToWrite = "<>HOSTNAME<>" + LineInput->text() + "<>\n";
             wf_config_file_->write(StrToWrite.toUtf8());

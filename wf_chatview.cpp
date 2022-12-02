@@ -130,11 +130,10 @@ bool SelfMsgFrameItem::ContentClicked(QPointF pos)
 int SelfMsgFrameItem::Resize(int width)
 {
     width_ = width;
-
     if (isPic_) {
         int row_width_limit = width_ - kMargins.right() - kMargins.left() - kIconSize.width() - 20 - 10;
         if (pic_.width() > row_width_limit) {
-            int rate = qRound((double)pic_.width() / row_width_limit);
+            int rate = pic_.width() / row_width_limit + 1;
             pic_content_size_ = QSize(pic_.width() / rate, pic_.height() / rate);
         } else {
             pic_content_size_ = QSize(pic_.width(), pic_.height());
@@ -264,7 +263,7 @@ int OthersMsgFrameItem::Resize(int width)
     if (isPic_) {
         int row_width_limit = width - kTextPos.x();
         if (pic_.width() > row_width_limit) {
-            int rate = qRound((double)pic_.width() / row_width_limit);
+            int rate = pic_.width() / row_width_limit + 1;
             pic_content_size_ = QSize(pic_.width() / rate, pic_.height() / rate);
         } else {
             pic_content_size_ = QSize(pic_.width(), pic_.height());
