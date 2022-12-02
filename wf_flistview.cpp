@@ -170,16 +170,19 @@ void WF_FriendListView::Notify(int sender_id, QString sender_name, int to_id, QS
     UserItemData senderItemdata;
     int indexInList;
     QString nameInMsg;
+    QPixmap senderIcon;
     //qDebug() << "(" << sender_id << "-" << sender_name << ") ---> " << to_id;
 
     if (to_id == 0) {
         senderItemdata = this->GetFriend(to_id);
         indexInList = this->GetItemIndexInList(to_id);
+        UserItemData tmpItemdata = this->GetFriend(sender_id);
+        if (!tmpItemdata.Available) senderIcon = QPixmap(":/Res/Tomphany.jpg");
         nameInMsg = sender_name;
     } else {
         senderItemdata = this->GetFriend(sender_id);
         indexInList = this->GetItemIndexInList(sender_id);
-        //nameInMsg = senderItemdata.Name;
+        senderIcon = this->GetFriend(sender_id).Pic;
         nameInMsg = "";
     }
 
@@ -196,13 +199,13 @@ void WF_FriendListView::Notify(int sender_id, QString sender_name, int to_id, QS
             if (sender_name == hostName_) {
                 emit AddSelfMessageSig(QPixmap(WF_DIR + "\\Self.jpg"), content, false);
             } else {
-                emit AddOthersMessageSig(senderItemdata.Pic, nameInMsg, content, false);
+                emit AddOthersMessageSig(senderIcon, nameInMsg, content, false);
             }
         } else if (content_type == "PicContent") {
             if (sender_name == hostName_) {
                 emit AddSelfMessageSig(QPixmap(WF_DIR + "\\Self.jpg"), content, true);
             } else {
-                emit AddOthersMessageSig(senderItemdata.Pic, nameInMsg, content, true);
+                emit AddOthersMessageSig(senderIcon, nameInMsg, content, true);
             }
         }
     }
