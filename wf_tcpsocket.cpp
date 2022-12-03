@@ -13,6 +13,7 @@ WF_TcpSocket::WF_TcpSocket(QString name, QString userIconUrl, QString ip, int po
     , ip_(ip)
     , port_(port)
     , rest_msg_("")
+    , userConflictTimes_(0)
 {
     socketSetup();
 
@@ -27,10 +28,11 @@ void WF_TcpSocket::socketSetup()
 {
     socket = new QTcpSocket(this);
 
+    socket->connectToHost(QHostAddress(ip_), port_);
+
     connect(socket, &QTcpSocket::connected, this, &WF_TcpSocket::doConnect);
     connect(socket, &QTcpSocket::readyRead, this, &WF_TcpSocket::doRead);
-
-    socket->connectToHost(QHostAddress(ip_), port_);
+    //connect(socket, &QTcpSocket::disconnected, this, &WF_TcpSocket::doDisConnect);
 }
 
 void WF_TcpSocket::doMessageReceived(QString const &msg)
@@ -51,6 +53,8 @@ void WF_TcpSocket::doMessageReceived(QString const &msg)
                 QString name = str.split("-W-F-", QString::SkipEmptyParts).at(1);
                 QByteArray icon_byte_array = str.split("-W-F-", QString::SkipEmptyParts).at(2).toUtf8();
                 QPixmap icon = ImageHandler->Base64ToImage(icon_byte_array);
+                if (name == name_) {userConflictTimes_++;}
+                if (userConflictTimes_ > 1) {emit applicationshutdown();}
                 emit sayhello(id, name, icon);
             }
         } else if (entity->is_notification()) {
@@ -128,3 +132,7 @@ void WF_TcpSocket::doRead()
     }
 }
 
+void WF_TcpSocket::doDisConnect()
+{
+    qDebug() << "Disconnect";
+}

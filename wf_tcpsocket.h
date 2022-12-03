@@ -26,6 +26,7 @@ public:
     void doConnect();
     void doRead();
     void doMessageReceived(QString const &msg);
+    void doDisConnect();
 
     QTcpSocket *socket;
     QString name_;
@@ -37,12 +38,14 @@ signals:
     void online(int others_id, QString others_name, QPixmap others_icon);
     void offline(int others_id, QString others_name);
     void notify(int sender_id, QString sender_name, int to_id, QString content, QString content_type);
+    void applicationshutdown();
 
 private:
     QString userIconUrl_;
     QString ip_;
     int port_;
     QString rest_msg_;
+    int userConflictTimes_;
 
     WF_TcpSocket* TcpSocket;
     WF_ImageHandler* ImageHandler;

@@ -104,6 +104,7 @@ private:
 private slots:
     void Send();
     void Flush(UserItemData itemdata);
+    void ApplicationShutDown();
     void PictureBrowser(QPixmap pic);
 };
 

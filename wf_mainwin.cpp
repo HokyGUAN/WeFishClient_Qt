@@ -13,6 +13,7 @@
 #include <QApplication>
 #include <QMainWindow>
 #include <QScreen>
+#include <QMessageBox>
 
 WF_MainWin::WF_MainWin(QWidget *parent, WF_TcpSocket *TcpSocket, QString UserIconUrl)
     : QWidget(nullptr)
@@ -70,8 +71,8 @@ WF_MainWin::WF_MainWin(QWidget *parent, WF_TcpSocket *TcpSocket, QString UserIco
     connect(FriendList, SIGNAL(ClickSig(UserItemData)), this, SLOT(Flush(UserItemData)));
     connect(FriendList, SIGNAL(AddOthersMessageSig(QPixmap, QString, QString, bool)), ChatView, SLOT(NotifyOthersMessage(QPixmap, QString, QString, bool)));
     connect(FriendList, SIGNAL(AddSelfMessageSig(QPixmap, QString, bool)), ChatView, SLOT(NotifySelfMessage(QPixmap, QString, bool)));
-    connect(CloseButton, &QPushButton::clicked, [this]{this->close();});
-    connect(MinimizeButton, &QPushButton::clicked, [this]{this->setWindowState(Qt::WindowMinimized);});
+    connect(CloseButton, &QPushButton::clicked, [this] {this->close();});
+    connect(MinimizeButton, &QPushButton::clicked, [this] {this->setWindowState(Qt::WindowMinimized);});
     connect(SendButton, SIGNAL(clicked()), this, SLOT(Send()));
     connect(ChatInput, SIGNAL(SendByKeySig()), this, SLOT(Send()));
     connect(tcp, SIGNAL(myid(int)), FriendList, SLOT(MyID(int)));
@@ -81,6 +82,7 @@ WF_MainWin::WF_MainWin(QWidget *parent, WF_TcpSocket *TcpSocket, QString UserIco
     connect(tcp, SIGNAL(offline(int, QString)), FriendList, SLOT(Offline(int, QString)));
     connect(tcp, &WF_TcpSocket::notify, [this]{QApplication::alert(this);});
     connect(tcp, SIGNAL(notify(int, QString, int, QString, QString)), FriendList, SLOT(Notify(int, QString, int, QString, QString)));
+    connect(tcp, &WF_TcpSocket::applicationshutdown, this, &WF_MainWin::ApplicationShutDown);
     connect(ChatView, SIGNAL(PictureContentClicked(QPixmap)), this, SLOT(PictureBrowser(QPixmap)));
     connect(UserIcon, SIGNAL(ChangedIcon(QString)), FriendList, SLOT(ChangedIcon(QString)));
 }
@@ -206,6 +208,24 @@ void WF_MainWin::Flush(UserItemData itemdata)
                 }
             }
         }
+    }
+}
+
+void WF_MainWin::ApplicationShutDown()
+{
+    QMessageBox:: StandardButton result= QMessageBox::warning(NULL, "WeFish Warning", "用户已登录，请更换用户名。", QMessageBox::Yes);
+    switch (result) {
+    case QMessageBox::Yes: {
+        QString WF_ConfigPath = WF_DIR + "\\Config";
+        QFile* wf_config_file = new QFile(WF_ConfigPath);
+        if (wf_config_file->exists()) {
+            wf_config_file->remove();
+        }
+        this->close();
+        break;
+    }
+    default:
+        break;
     }
 }
 
