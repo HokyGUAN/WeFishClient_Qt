@@ -38,7 +38,8 @@ signals:
     void online(int others_id, QString others_name, QPixmap others_icon);
     void offline(int others_id, QString others_name);
     void notify(int sender_id, QString sender_name, int to_id, QString content, QString content_type);
-    void applicationshutdown();
+    void applicationshutdown(ShutDownReason reason);
+    void servershutdown(ShutDownReason reason);
 
 private:
     QString userIconUrl_;

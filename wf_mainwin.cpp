@@ -83,6 +83,7 @@ WF_MainWin::WF_MainWin(QWidget *parent, WF_TcpSocket *TcpSocket, QString UserIco
     connect(tcp, &WF_TcpSocket::notify, [this]{QApplication::alert(this);});
     connect(tcp, SIGNAL(notify(int, QString, int, QString, QString)), FriendList, SLOT(Notify(int, QString, int, QString, QString)));
     connect(tcp, &WF_TcpSocket::applicationshutdown, this, &WF_MainWin::ApplicationShutDown);
+    connect(tcp, &WF_TcpSocket::servershutdown, this, &WF_MainWin::ApplicationShutDown);
     connect(ChatView, SIGNAL(PictureContentClicked(QPixmap)), this, SLOT(PictureBrowser(QPixmap)));
     connect(UserIcon, SIGNAL(ChangedIcon(QString)), FriendList, SLOT(ChangedIcon(QString)));
 }
@@ -211,22 +212,23 @@ void WF_MainWin::Flush(UserItemData itemdata)
     }
 }
 
-void WF_MainWin::ApplicationShutDown()
+void WF_MainWin::ApplicationShutDown(ShutDownReason reason)
 {
-    QMessageBox:: StandardButton result= QMessageBox::warning(NULL, "WeFish Warning", "用户已登录，请更换用户名。", QMessageBox::Yes);
-    switch (result) {
-    case QMessageBox::Yes: {
+    switch (reason) {
+    case REASON_USERCONFLICT: {
+        QMessageBox::warning(NULL, "WeFish Warning", "用户已登录，请更换用户名", QMessageBox::Yes);
         QString WF_ConfigPath = WF_DIR + "\\Config";
         QFile* wf_config_file = new QFile(WF_ConfigPath);
         if (wf_config_file->exists()) {
             wf_config_file->remove();
         }
-        this->close();
         break;
     }
-    default:
+    case REASON_SERVERLOST:
+        QMessageBox::warning(NULL, "WeFish Warning", "服务器已断开", QMessageBox::Yes);
         break;
     }
+    this->close();
 }
 
 void WF_MainWin::PictureBrowser(QPixmap pic)

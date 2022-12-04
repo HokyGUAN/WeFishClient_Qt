@@ -25,6 +25,11 @@
 
 extern QString WF_DIR;
 
+typedef enum e_shutdownReason {
+    REASON_USERCONFLICT = 0,
+    REASON_SERVERLOST,
+} ShutDownReason;
+
 class WF_ImageHandler : public QObject
 {
     Q_OBJECT
