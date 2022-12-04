@@ -5,5 +5,8 @@
         <file>Res/whiteClose.png</file>
         <file>Res/whiteMinimize.png</file>
         <file>Res/Tomphany.jpg</file>
+        <file>Res/chatIcon.png</file>
+        <file>Res/graySetting.png</file>
+        <file>Res/whiteSetting.png</file>
     </qresource>
 </RCC>

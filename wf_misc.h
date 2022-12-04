@@ -41,25 +41,24 @@ public:
     QPixmap Base64ToImage(QByteArray bytearray);
 };
 
-class WF_HeadIcon : public QLabel
+class WF_Setting : public QLabel
 {
     Q_OBJECT
 public:
-    WF_HeadIcon(QWidget * parent);
-    ~WF_HeadIcon() {};
-    QString Get_Image();
+    WF_Setting(QWidget * parent);
+    ~WF_Setting() {};
 
 protected:
     void mousePressEvent(QMouseEvent *event) Q_DECL_OVERRIDE;
+    void mouseReleaseEvent(QMouseEvent *event) Q_DECL_OVERRIDE;
     void enterEvent(QEvent *) Q_DECL_OVERRIDE;
+    void leaveEvent(QEvent *) Q_DECL_OVERRIDE;
 
 private:
     QMenu* menu;
     QAction * change_icon ;
-    QAction * getinfo;
+    QAction * setting;
     QString Image_Path;
-
-    QDialog *dig_open;
 
 signals:
     void ChangedIcon(QString path);

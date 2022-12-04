@@ -42,48 +42,71 @@ QPixmap WF_ImageHandler::Base64ToImage(QByteArray byteArray) {
     return image;
 }
 
-WF_HeadIcon::WF_HeadIcon(QWidget * parent) : QLabel(parent)
+WF_Setting::WF_Setting(QWidget * parent) : QLabel(parent)
 {
+    this->setStyleSheet("border-image:url(:/Res/graySetting.png);outset;");
     menu = new QMenu("个人信息");
     change_icon = new QAction("更换头像", this);
-    getinfo = new QAction("获取信息", this);
+    setting = new QAction("设置", this);
     menu->addAction(change_icon);
-    menu->addSeparator();
-    menu->addAction(getinfo);
-    menu->setWindowFlags(menu->windowFlags() | Qt::FramelessWindowHint);
+    //menu->addSeparator();
+    menu->addAction(setting);
+    menu->setWindowFlags(menu->windowFlags() | Qt::FramelessWindowHint | Qt::NoDropShadowWindowHint);
     //menu->setAttribute(Qt::WA_TranslucentBackground);
-    menu->setStyleSheet(" QMenu {border-radius:5px;font-family:'Microsoft Yahei';font-size:14px;rgb(0,20,255);}"
-                        " QMenu::item {height:30px; width:100px;padding-left:20px;border: 1px solid none;}"
-                        " QMenu::item:selected {background-color:rgb(0,120,215);padding-left:20px;border: 1px solid rgb(65,173,255);}");
+    menu->setStyleSheet("QMenu {"
+                        "width:140px;"
+                        "height:90px;"
+                        "font-size:14px;"
+                        "background-color: rgb(41, 41, 41);"
+                        "color: rgb(140,140,140);"
+                        "border-radius: 0px; }"
+                        "QMenu::item {"
+                        "width:140px;"
+                        "height:45px;"
+                        "padding-left:10px;"
+                        "margin:0px;"
+                        "background-color: transparent;}"
+                        "QMenu::item:selected {"
+                        "background-color: rgb(48, 49, 51);}");
 
    connect(change_icon, SIGNAL(triggered()), this, SLOT(ChangeIcon()));
-
 }
 
-void WF_HeadIcon::mousePressEvent(QMouseEvent *event) {
-    if (event->button() == Qt::RightButton) {
-        menu->exec(event->globalPos());
+void WF_Setting::mousePressEvent(QMouseEvent *event) {
+    if (event->button() == Qt::LeftButton) {
+        this->setStyleSheet("border-image:url(:/Res/graySetting.png);outset;");
+        QPoint gp = event->globalPos();
+        QPoint pos = mapToGlobal(this->pos());
+        int Xoffset = gp.rx() - pos.rx();
+        menu->exec(QPoint(gp.rx() - Xoffset + 30, gp.ry() - 70));
     }
 }
 
-void WF_HeadIcon::ChangeIcon()
+void WF_Setting::mouseReleaseEvent(QMouseEvent *event)
+{
+    Q_UNUSED(event)
+    this->setStyleSheet("border-image:url(:/Res/graySetting.png);outset;");
+}
+
+void WF_Setting::enterEvent(QEvent *event)
+{
+    Q_UNUSED(event)
+    this->setToolTip("更多");
+    this->setStyleSheet("border-image:url(:/Res/whiteSetting.png);outset;");
+}
+
+void WF_Setting::leaveEvent(QEvent *event)
+{
+    Q_UNUSED(event)
+    this->setStyleSheet("border-image:url(:/Res/graySetting.png);outset;");
+}
+
+void WF_Setting::ChangeIcon()
 {
     Image_Path = QFileDialog::getOpenFileName(this,"Choose Icon","",
                                                   "*Image Files(*.jpg;*.png;*.bmp);;All(*.*)");
     QPixmap icon(Image_Path);
     icon.save(WF_DIR + "\\Self.jpg");
 
-    this->setPixmap(icon.scaled(40, 40));
-
     emit ChangedIcon(Image_Path);
-}
-
-void WF_HeadIcon::enterEvent(QEvent *)
-{
-    this->setToolTip("个人信息");
-}
-
-QString WF_HeadIcon::Get_Image()
-{
-    return Image_Path;
 }

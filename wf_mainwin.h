@@ -53,6 +53,7 @@ protected:
          QWidget::mouseReleaseEvent(event);
     };
     virtual void closeEvent(QCloseEvent *event) {
+        isClosed = true;
         tcp->socket->disconnectFromHost();
         event->accept();
     };
@@ -85,7 +86,9 @@ private:
     QRectF SendBtnFrame_;
     QLabel* NameLabel;
 
-    WF_HeadIcon* UserIcon;
+    QLabel* UserIcon;
+    QLabel* ChattingIcon;
+    WF_Setting* Setting;
     WF_ChatView* ChatView;
     WF_FriendListView* FriendList;
     WF_ChatInput* ChatInput;
@@ -100,6 +103,8 @@ private:
     int currentItemId_;
     UserItemData myItemdata_;
     UserItemData currentItem_;
+
+    bool isClosed;
 
 private slots:
     void Send();

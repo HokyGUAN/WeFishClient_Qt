@@ -24,6 +24,7 @@ WF_MainWin::WF_MainWin(QWidget *parent, WF_TcpSocket *TcpSocket, QString UserIco
     , currentItemId_(0)
 {
     Q_UNUSED(parent)
+    isClosed = false;
     this->setWindowTitle("WeFish");
     this->setWindowIcon(QIcon(QPixmap(":/Res/Tomphany.jpg")));
     this->setWindowFlags(Qt::FramelessWindowHint);
@@ -38,9 +39,14 @@ WF_MainWin::WF_MainWin(QWidget *parent, WF_TcpSocket *TcpSocket, QString UserIco
     SendBtnPos_ = QPoint(820, 595);
     SendBtnFrame_ = QRectF(SendBtnPos_.x(), SendBtnPos_.y(), 90, 35);
 
-    UserIcon = new WF_HeadIcon(this);
+    UserIcon = new QLabel(this);
     UserIcon->setGeometry(7, 37, 40, 40);
-    UserIcon->setPixmap(QPixmap(UserIconUrl).scaled(40, 40));
+    UserIcon->setPixmap(QPixmap(userIconUrl_).scaled(40, 40));
+    ChattingIcon = new QLabel(this);
+    ChattingIcon->setGeometry(12, 95, 30, 30);
+    ChattingIcon->setPixmap(QPixmap(":/Res/chatIcon.png").scaled(30, 30));
+    Setting = new WF_Setting(this);
+    Setting->setGeometry(12, 592, 30, 30);
 
     ChatView = new WF_ChatView(this);
     ChatView->setGeometry(QRect(ChatViewFrame_.x(), ChatViewFrame_.y(), ChatViewFrame_.width(), ChatViewFrame_.height()));
@@ -80,12 +86,13 @@ WF_MainWin::WF_MainWin(QWidget *parent, WF_TcpSocket *TcpSocket, QString UserIco
     connect(tcp, SIGNAL(sayhello(int, QString, QPixmap)), FriendList, SLOT(SayHello(int, QString, QPixmap)));
     connect(tcp, SIGNAL(online(int, QString, QPixmap)), FriendList, SLOT(Online(int, QString, QPixmap)));
     connect(tcp, SIGNAL(offline(int, QString)), FriendList, SLOT(Offline(int, QString)));
-    connect(tcp, &WF_TcpSocket::notify, [this]{QApplication::alert(this);});
+    connect(tcp, &WF_TcpSocket::notify, [this] {QApplication::alert(this);});
     connect(tcp, SIGNAL(notify(int, QString, int, QString, QString)), FriendList, SLOT(Notify(int, QString, int, QString, QString)));
     connect(tcp, &WF_TcpSocket::applicationshutdown, this, &WF_MainWin::ApplicationShutDown);
     connect(tcp, &WF_TcpSocket::servershutdown, this, &WF_MainWin::ApplicationShutDown);
     connect(ChatView, SIGNAL(PictureContentClicked(QPixmap)), this, SLOT(PictureBrowser(QPixmap)));
-    connect(UserIcon, SIGNAL(ChangedIcon(QString)), FriendList, SLOT(ChangedIcon(QString)));
+    connect(Setting, SIGNAL(ChangedIcon(QString)), FriendList, SLOT(ChangedIcon(QString)));
+    connect(Setting, &WF_Setting::ChangedIcon, [=](QString imagePath) {this->UserIcon->setPixmap(QPixmap(imagePath).scaled(40, 40));});
 }
 
 WF_MainWin::~WF_MainWin()
@@ -214,6 +221,7 @@ void WF_MainWin::Flush(UserItemData itemdata)
 
 void WF_MainWin::ApplicationShutDown(ShutDownReason reason)
 {
+    if (isClosed) return;
     switch (reason) {
     case REASON_USERCONFLICT: {
         QMessageBox::warning(NULL, "WeFish Warning", "用户已登录，请更换用户名", QMessageBox::Yes);
