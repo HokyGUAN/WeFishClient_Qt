@@ -8,5 +8,14 @@
         <file>Res/chatIcon.png</file>
         <file>Res/graySetting.png</file>
         <file>Res/whiteSetting.png</file>
+        <file>Res/loginGSetting.png</file>
+        <file>Res/loginWSetting.png</file>
+        <file>Res/loginWClose.png</file>
+        <file>Res/ChatIconPkgBlack.png</file>
+        <file>Res/ChatIconPkgGreen.png</file>
+        <file>Res/ChatIconPkgWhite.png</file>
+        <file>Res/ChatFileBlack.png</file>
+        <file>Res/ChatFileGreen.png</file>
+        <file>Res/ChatFileWhite.png</file>
     </qresource>
 </RCC>

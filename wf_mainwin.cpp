@@ -13,15 +13,14 @@
 #include <QApplication>
 #include <QMainWindow>
 #include <QScreen>
-#include <QMessageBox>
 
-WF_MainWin::WF_MainWin(QWidget *parent, WF_TcpSocket *TcpSocket, QString UserIconUrl)
+
+WF_MainWin::WF_MainWin(QWidget *parent, WF_MainSocket* mainSocket, QString UserIconUrl)
     : QWidget(nullptr)
     , width_(920)
     , height_(635)
-    , tcp(TcpSocket)
+    , MainSocket(mainSocket)
     , userIconUrl_(UserIconUrl)
-    , currentItemId_(0)
 {
     Q_UNUSED(parent)
     isClosed = false;
@@ -34,7 +33,7 @@ WF_MainWin::WF_MainWin(QWidget *parent, WF_TcpSocket *TcpSocket, QString UserIco
     ListFrame_ = QRectF(ListPos_.x(), ListPos_.y() + 1, 245, height_ - ListPos_.y());
     ChatViewPos_ = QPoint(ListPos_.x() + ListFrame_.width() + 1, ListPos_.y() + 1);
     ChatViewFrame_ = QRectF(ChatViewPos_.x(), ChatViewPos_.y(), width_ - ChatViewPos_.x(), 434);
-    ChatInputPos_ = QPoint(ChatViewPos_.x() + 24, 496);
+    ChatInputPos_ = QPoint(ChatViewPos_.x() + 23, 530);
     ChatInputFrame_ = QRectF(ChatInputPos_.x(), ChatInputPos_.y(), width_ - ChatInputPos_.x(), height_ - ChatInputPos_.y() - 45);
     SendBtnPos_ = QPoint(820, 595);
     SendBtnFrame_ = QRectF(SendBtnPos_.x(), SendBtnPos_.y(), 90, 35);
@@ -51,7 +50,7 @@ WF_MainWin::WF_MainWin(QWidget *parent, WF_TcpSocket *TcpSocket, QString UserIco
     ChatView = new WF_ChatView(this);
     ChatView->setGeometry(QRect(ChatViewFrame_.x(), ChatViewFrame_.y(), ChatViewFrame_.width(), ChatViewFrame_.height()));
 
-    FriendList = new WF_FriendListView(this, tcp->name_);
+    FriendList = new WF_FriendListView(this, MainSocket->name_);
     FriendList->setGeometry(QRect(ListFrame_.x(), ListFrame_.y(), ListFrame_.width(), ListFrame_.height()));
     currentItem_ = FriendList->GetFriend(0);
 
@@ -68,10 +67,17 @@ WF_MainWin::WF_MainWin(QWidget *parent, WF_TcpSocket *TcpSocket, QString UserIco
     MinimizeButton = new WF_MinimizeButton(this, 33, 24);
     MinimizeButton->setGeometry(width_ - 66, 0, 33, 24);
 
+    ChatBoxEmojiButton = new WF_ChatBoxEmojiButton(this, 30, 30);
+    ChatBoxEmojiButton->setGeometry(ChatViewPos_.x() + 20, 500, 30, 30);
+
+    ChatBoxFileButton = new WF_ChatBoxFileButton(this, 30, 30);
+    ChatBoxFileButton->setGeometry(ChatViewPos_.x() + 57, 499, 30, 30);
+
     NameLabel = new QLabel(this);
     NameLabel->setGeometry(340, 8, 400, 40);
     NameLabel->setFont(QFont("Microsoft Yahei", 16));
     ImageHandler = new WF_ImageHandler();
+    Icon_ = ImageHandler->ImageToBase64(userIconUrl_);
 
     connect(FriendList, &WF_FriendListView::ClickSig, [=](UserItemData itemdata) {NameLabel->setText(itemdata.Name);});
     connect(FriendList, SIGNAL(ClickSig(UserItemData)), this, SLOT(Flush(UserItemData)));
@@ -81,18 +87,19 @@ WF_MainWin::WF_MainWin(QWidget *parent, WF_TcpSocket *TcpSocket, QString UserIco
     connect(MinimizeButton, &QPushButton::clicked, [this] {this->setWindowState(Qt::WindowMinimized);});
     connect(SendButton, SIGNAL(clicked()), this, SLOT(Send()));
     connect(ChatInput, SIGNAL(SendByKeySig()), this, SLOT(Send()));
-    connect(tcp, SIGNAL(myid(int)), FriendList, SLOT(MyID(int)));
-    connect(tcp, &WF_TcpSocket::myid, [=](int MyIDinGroup) {myId_ = MyIDinGroup; NameLabel->setText("Group"); qDebug() << "MainWin Get MyID:" << myId_;});
-    connect(tcp, SIGNAL(sayhello(int, QString, QPixmap)), FriendList, SLOT(SayHello(int, QString, QPixmap)));
-    connect(tcp, SIGNAL(online(int, QString, QPixmap)), FriendList, SLOT(Online(int, QString, QPixmap)));
-    connect(tcp, SIGNAL(offline(int, QString)), FriendList, SLOT(Offline(int, QString)));
-    connect(tcp, &WF_TcpSocket::notify, [this] {QApplication::alert(this);});
-    connect(tcp, SIGNAL(notify(int, QString, int, QString, QString)), FriendList, SLOT(Notify(int, QString, int, QString, QString)));
-    connect(tcp, &WF_TcpSocket::applicationshutdown, this, &WF_MainWin::ApplicationShutDown);
-    connect(tcp, &WF_TcpSocket::servershutdown, this, &WF_MainWin::ApplicationShutDown);
+    connect(ChatBoxFileButton, &QPushButton::clicked, this, &WF_MainWin::doSendFile);
+    connect(MainSocket, SIGNAL(eAccountCheckin(int)), FriendList, SLOT(sAccountCheckin(int)));
+    connect(MainSocket, &WF_MainSocket::eAccountCheckin, [=](int MyAccount) {account_ = MyAccount; NameLabel->setText("Group"); qDebug() << "MainWin Get My Account:" << account_;});
+    connect(MainSocket, SIGNAL(eSayHello(int, QString, QPixmap)), FriendList, SLOT(sSayHello(int, QString, QPixmap)));
+    connect(MainSocket, SIGNAL(eOnline(int, QString, QPixmap)), FriendList, SLOT(sOnline(int, QString, QPixmap)));
+    connect(MainSocket, SIGNAL(eOffline(int, QString)), FriendList, SLOT(sOffline(int, QString)));
+    connect(MainSocket, &WF_MainSocket::eNotify, [this] {QApplication::alert(this);});
+    connect(MainSocket, SIGNAL(eNotify(int, QString, QPixmap, int, QString, QString)), FriendList, SLOT(sNotify(int, QString, QPixmap, int, QString, QString)));
+    connect(MainSocket, &WF_MainSocket::applicationshutdown, this, &WF_MainWin::ApplicationShutDown);
+    connect(MainSocket, &WF_MainSocket::servershutdown, this, &WF_MainWin::ApplicationShutDown);
     connect(ChatView, SIGNAL(PictureContentClicked(QPixmap)), this, SLOT(PictureBrowser(QPixmap)));
-    connect(Setting, SIGNAL(ChangedIcon(QString)), FriendList, SLOT(ChangedIcon(QString)));
-    connect(Setting, &WF_Setting::ChangedIcon, [=](QString imagePath) {this->UserIcon->setPixmap(QPixmap(imagePath).scaled(40, 40));});
+    connect(Setting, SIGNAL(eChangedIcon(QString)), FriendList, SLOT(sChangedIcon(QString)));
+    connect(Setting, &WF_Setting::eChangedIcon, [=](QString imagePath) {this->UserIcon->setPixmap(QPixmap(imagePath).scaled(40, 40));});
 }
 
 WF_MainWin::~WF_MainWin()
@@ -139,81 +146,92 @@ void WF_MainWin::Send()
             msg = ChatInput->toPlainText();
         }
 
-        myItemdata_ = FriendList->GetFriend(myId_);
-        UserItemData Friend = FriendList->GetFriend(currentItemId_);
-        int FriendindexInList = FriendList->GetItemIndexInList(currentItemId_);
-        if (msg != "") {
-            Friend.HistoryMsg.push_back(myItemdata_.Name + ":" + content_type + ":" + msg);
-            FriendList->SetFriend(FriendindexInList, Friend);
+        myItemdata_ = FriendList->GetFriend(account_);
+        UserItemData Friend = FriendList->GetFriend(currentItemAccount_);
+        int FriendindexInList = FriendList->GetItemIndexInList(currentItemAccount_);
 
-            jsonrpcpp::request_ptr request(nullptr);
-            request.reset(new jsonrpcpp::Request(jsonrpcpp::Id(MESSAGE_TYPE_CONTENT), content_type.toStdString(), \
-                                                 jsonrpcpp::Parameter("IDinGroup", myId_, \
-                                                                      "Who", myItemdata_.Name.toUtf8(), \
-                                                                      "ToID", currentItem_.ID, \
-                                                                      "Content", msg.toUtf8())));
-            msg = QString(request->to_json().dump().data());
+        if (msg == "") return;
 
-            QByteArray byteArray = msg.toUtf8();
-            byteArray = byteArray.toBase64();
-            msg = byteArray + "\r\n";
-            tcp->socket->write(msg.toUtf8());
+        Friend.HistoryMsg.push_back(QString::number(myItemdata_.Account) + ":" + myItemdata_.Name + ":" + content_type + ":" + msg);
+        FriendList->SetFriend(FriendindexInList, Friend);
 
-            if (content_type == "PicContent") {
-                ChatView->AppendSelfMessage(myItemdata_.Pic, pic_msg, true);
-            } else {
-                ChatView->AppendSelfMessage(myItemdata_.Pic, ChatInput->toPlainText(), false);
-            }
+        jsonrpcpp::request_ptr request(nullptr);
+        request.reset(new jsonrpcpp::Request(jsonrpcpp::Id(MESSAGE_TYPE_CONTENT), content_type.toStdString(), \
+                                             jsonrpcpp::Parameter("Account", account_, \
+                                                                  "Name", myItemdata_.Name.toUtf8(), \
+                                                                  "Icon", Icon_, \
+                                                                  "ToAccount", currentItem_.Account, \
+                                                                  "Content", msg.toUtf8())));
+        msg = QString(request->to_json().dump().data());
+
+        //QByteArray byteArray = msg.toUtf8();
+        //byteArray = byteArray.toBase64();
+        QByteArray cipher = MainSocket->cryptor_.Encrypt(msg.toUtf8());
+        msg = cipher + "\r\n";
+        qDebug() << "Sent: " << msg.toUtf8();
+        MainSocket->socket->write(msg.toUtf8());
+
+        if (content_type == "PicContent") {
+            ChatView->AppendSelfMessage(myItemdata_.Pic, pic_msg, true);
+        } else {
+            ChatView->AppendSelfMessage(myItemdata_.Pic, ChatInput->toPlainText(), false);
         }
+
         ChatInput->clear();
     }
+}
+
+void WF_MainWin::doSendFile()
+{
+    QString FilePath = QFileDialog::getOpenFileName(this,"Choose File","","All(*.*)");
+
+    qDebug() << "Path: " << FilePath;
 }
 
 void WF_MainWin::Flush(UserItemData itemdata)
 {
     this->ChatView->Clear();
     currentItem_ = itemdata;
-    currentItemId_ = currentItem_.ID;
+    currentItemAccount_ = currentItem_.Account;
 
-    QString exact_name;
     UserItemData tmpItemdata;
-    UserItemData myItemdata = FriendList->GetFriend(myId_);
+    UserItemData myItemdata = FriendList->GetFriend(account_);
 
-    //qDebug() << "MyID:" << myItemdata.ID << " MyName:" << myItemdata.Name;
-    //qDebug() << __FUNCTION__ << ": " << itemdata.ID << "-" << itemdata.Name;
+    //qDebug() << "My Account:" << myItemdata.Account << " My Name:" << myItemdata.Name;
+    //qDebug() << __FUNCTION__ << ": " << itemdata.Account << "-" << itemdata.Name;
     for (auto msg : itemdata.HistoryMsg) {
+        int sender_account = 0;
         QString sender_name = "";
         QString content_type = "";
         QString content = "";
         QStringList savedContent = msg.split(":", QString::SkipEmptyParts);
-        if (savedContent.size() == 3) {
-            sender_name = savedContent.at(0);
-            content_type = savedContent.at(1);
-            content = savedContent.at(2);
+        if (savedContent.size() == 4) {
+            sender_account = savedContent.at(0).toInt();
+            sender_name = savedContent.at(1);
+            content_type = savedContent.at(2);
+            content = savedContent.at(3);
         }
 
-        //qDebug() << "SenderName:" << sender_name << " Content:" << content;
-        if (sender_name != "" && content_type != "" && content != "") {
-            tmpItemdata = FriendList->GetFriend(sender_name);
+        if (sender_account == 0 || sender_name == "" || content_type == "" || content == "") {
+            return;
+        }
 
-            if (itemdata.ID == 0) {
-                exact_name = sender_name;
+        tmpItemdata = FriendList->GetFriend(sender_account);
+        if (!tmpItemdata.Available) {
+            tmpItemdata.Pic = FriendList->user_icon_map[sender_account];
+        }
+
+        if (account_ != tmpItemdata.Account) {
+            if (content_type == "PicContent") {
+                this->ChatView->AppendOtherMessage(tmpItemdata.Pic, sender_name, content, true);
             } else {
-                exact_name = "";
+                this->ChatView->AppendOtherMessage(tmpItemdata.Pic, sender_name, content, false);
             }
-
-            if (sender_name != myItemdata.Name) {
-                if (content_type == "PicContent") {
-                    this->ChatView->AppendOtherMessage(tmpItemdata.Pic, exact_name, content, true);
-                } else {
-                    this->ChatView->AppendOtherMessage(tmpItemdata.Pic, exact_name, content, false);
-                }
+        } else {
+            if (content_type == "PicContent") {
+                this->ChatView->AppendSelfMessage(myItemdata.Pic, content, true);
             } else {
-                if (content_type == "PicContent") {
-                    this->ChatView->AppendSelfMessage(myItemdata.Pic, content, true);
-                } else {
-                    this->ChatView->AppendSelfMessage(myItemdata.Pic, content, false);
-                }
+                this->ChatView->AppendSelfMessage(myItemdata.Pic, content, false);
             }
         }
     }
@@ -224,7 +242,7 @@ void WF_MainWin::ApplicationShutDown(ShutDownReason reason)
     if (isClosed) return;
     switch (reason) {
     case REASON_USERCONFLICT: {
-        QMessageBox::warning(NULL, "WeFish Warning", "用户已登录，请更换用户名", QMessageBox::Yes);
+        QMessageBox::warning(NULL, "WeFish Warning", "用户已登录，请切换用户", QMessageBox::Yes);
         QString WF_ConfigPath = WF_DIR + "\\Config";
         QFile* wf_config_file = new QFile(WF_ConfigPath);
         if (wf_config_file->exists()) {

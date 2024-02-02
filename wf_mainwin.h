@@ -14,8 +14,7 @@
 #include "wf_chatview.h"
 #include "wf_flistview.h"
 #include "wf_chatinput.h"
-#include "wf_button.h"
-#include "wf_tcpsocket.h"
+#include "wf_mainsocket.h"
 #include "wf_browser.h"
 #include "wf_misc.h"
 
@@ -23,7 +22,7 @@ class WF_MainWin : public QWidget
 {
     Q_OBJECT
 public:
-    explicit WF_MainWin(QWidget *parent = nullptr, WF_TcpSocket *TcpSocket = nullptr, QString UserIconUrl = NULL);
+    explicit WF_MainWin(QWidget *parent = nullptr, WF_MainSocket* mainSocket = nullptr, QString UserIconUrl = NULL);
     ~WF_MainWin();
 
     void paintEvent(QPaintEvent *event);
@@ -54,7 +53,7 @@ protected:
     };
     virtual void closeEvent(QCloseEvent *event) {
         isClosed = true;
-        tcp->socket->disconnectFromHost();
+        MainSocket->socket->disconnectFromHost();
         event->accept();
     };
 
@@ -95,12 +94,15 @@ private:
     WF_Button* SendButton;
     WF_CloseButton* CloseButton;
     WF_MinimizeButton* MinimizeButton;
-    WF_TcpSocket* tcp;
+    WF_ChatBoxEmojiButton* ChatBoxEmojiButton;
+    WF_ChatBoxFileButton* ChatBoxFileButton;
+    WF_MainSocket* MainSocket;
     WF_ImageHandler* ImageHandler;
-    QString userIconUrl_;
 
-    int myId_;
-    int currentItemId_;
+    int account_;
+    QString userIconUrl_;
+    QByteArray Icon_;
+    int currentItemAccount_ = 0;
     UserItemData myItemdata_;
     UserItemData currentItem_;
 
@@ -108,6 +110,7 @@ private:
 
 private slots:
     void Send();
+    void doSendFile();
     void Flush(UserItemData itemdata);
     void ApplicationShutDown(ShutDownReason reason);
     void PictureBrowser(QPixmap pic);

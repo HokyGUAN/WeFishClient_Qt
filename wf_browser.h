@@ -23,7 +23,7 @@ public:
     void SetPicPath(QString strPath);//设置图片路径
     void SetQpixmap(QPixmap pic);//设置QPixmap
     void SetPic(QImage Image); //设置图片
-    void setPenWidth(int w) { w = m_intPenWidth; };
+    void setPenWidth(int w) { m_intPenWidth = w; };
     void setZoom(bool bZoom) { m_bZoom = bZoom; }//设置是否允许滚动缩放
 
 protected:

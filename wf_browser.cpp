@@ -44,6 +44,7 @@ void WF_Browser::SetPic(QImage Image)
 
 void WF_Browser::paintEvent(QPaintEvent *event)
 {
+    Q_UNUSED(event)
     // 设置一个画家painter,  在空白的tmpPixMap上进行绘制的
     QPainter painter(this);
     QPixmap tmpPixMap(this->width(), this->height());

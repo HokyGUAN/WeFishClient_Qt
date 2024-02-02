@@ -15,12 +15,14 @@
 
 #include <QMetaType>
 #include <QList>
+#include <QMap>
+
 typedef struct userItemData
 {
     bool Available;
     QPixmap Pic;
     QString Name;
-    int ID;
+    int Account;
     bool Unread;
     QList<QString> HistoryMsg;
 
@@ -28,7 +30,7 @@ typedef struct userItemData
         Available = false;
         Pic = QPixmap();
         Name = "";
-        ID = -1;
+        Account = -1;
         Unread = false;
     }
 } UserItemData;
@@ -58,27 +60,29 @@ public:
     ~WF_FriendListView() {};
 
     void AddFriend(UserItemData ItemData);
-    void RemoveFriend(int ID);
-    UserItemData GetFriend(int ID);
+    void RemoveFriend(int Account);
+    UserItemData GetFriend(int Account);
     UserItemData GetFriend(QString Name);
-    int GetItemIndexInList(int ID);
+    int GetItemIndexInList(int Account);
     void SetFriend(int IndexInList, UserItemData itemdata);
 
+    QMap<int, QPixmap> user_icon_map;
+
 private:
-    int myId_;
+    int account_;
     QString hostName_;
     QStandardItemModel* wf_f_model;
 
     UserItemData currentFriendItem_;
 
 private slots:
-    void MyID(int ID) {myId_ = ID; qDebug() << "FriendListView Get MyID" << myId_;};
+    void sAccountCheckin(int MyAccount) {account_ = MyAccount; qDebug() << "FriendListView Get My Account" << account_;};
     void ListClick(QModelIndex index);
-    void SayHello(int others_id, QString others_name, QPixmap others_icon);
-    void Online(int others_id, QString others_name, QPixmap others_icon);
-    void Offline(int others_id, QString others_name);
-    void Notify(int sender_id, QString sender_name, int to_id, QString content, QString content_type);
-    void ChangedIcon(QString pic_path);
+    void sSayHello(int others_account, QString others_name, QPixmap others_icon);
+    void sOnline(int others_account, QString others_name, QPixmap others_icon);
+    void sOffline(int others_account, QString others_name);
+    void sNotify(int sender_account, QString sender_name, QPixmap icon, int to_id, QString content, QString content_type);
+    void sChangedIcon(QString pic_path);
 
 signals:
     void ClickSig(UserItemData itemdata);

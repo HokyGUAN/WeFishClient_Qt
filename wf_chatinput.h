@@ -11,6 +11,7 @@
 
 #include <QTextEdit>
 
+
 class WF_ChatInput : public QTextEdit
 {
     Q_OBJECT

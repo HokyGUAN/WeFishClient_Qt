@@ -69,7 +69,7 @@ WF_FriendListView::WF_FriendListView(QWidget *parent, QString name)
     ItemData.Available = true;
     ItemData.Pic = QPixmap(":/Res/Tomphany.jpg");
     ItemData.Name = "Group";
-    ItemData.ID = 0;
+    ItemData.Account = 0;
     this->AddFriend(ItemData);
     currentFriendItem_ = ItemData;
 
@@ -86,10 +86,10 @@ void WF_FriendListView::AddFriend(UserItemData ItemData)
     this->setModel(wf_f_model);
 }
 
-void WF_FriendListView::RemoveFriend(int ID)
+void WF_FriendListView::RemoveFriend(int Account)
 {
     for (int i = 0; i < wf_f_model->rowCount(); ++i) {
-        if (ID == wf_f_model->item(i, 0)->data().value<UserItemData>().ID) {
+        if (Account == wf_f_model->item(i, 0)->data().value<UserItemData>().Account) {
             wf_f_model->removeRow(i);
             break;
         }
@@ -97,11 +97,11 @@ void WF_FriendListView::RemoveFriend(int ID)
     this->setModel(wf_f_model);
 }
 
-UserItemData WF_FriendListView::GetFriend(int ID)
+UserItemData WF_FriendListView::GetFriend(int Account)
 {
     UserItemData itemdata;
     for (int i = 0; i < wf_f_model->rowCount(); ++i) {
-        if (ID == wf_f_model->item(i, 0)->data().value<UserItemData>().ID) {
+        if (Account == wf_f_model->item(i, 0)->data().value<UserItemData>().Account) {
             itemdata = wf_f_model->item(i, 0)->data().value<UserItemData>();
         }
     }
@@ -119,10 +119,10 @@ UserItemData WF_FriendListView::GetFriend(QString Name)
     return itemdata;
 }
 
-int WF_FriendListView::GetItemIndexInList(int ID)
+int WF_FriendListView::GetItemIndexInList(int Account)
 {
     for (int i = 0; i < wf_f_model->rowCount(); ++i) {
-        if (ID == wf_f_model->item(i, 0)->data().value<UserItemData>().ID) {
+        if (Account == wf_f_model->item(i, 0)->data().value<UserItemData>().Account) {
             return i;
         }
     }
@@ -137,72 +137,76 @@ void WF_FriendListView::SetFriend(int IndexInList, UserItemData itemdata)
     this->setModel(wf_f_model);
 }
 
-void WF_FriendListView::SayHello(int others_id, QString others_name, QPixmap others_icon)
+void WF_FriendListView::sSayHello(int others_account, QString others_name, QPixmap others_icon)
 {
-    qDebug() << "WF_MainWin SayHello: " << others_id << "-" << others_name << "-" << others_icon;
+    qDebug() << "WF_MainWin SayHello: " << others_account << "-" << others_name << "-" << others_icon;
+    user_icon_map.insert(others_account, others_icon);
     UserItemData ItemData;
     ItemData.Available = true;
-    ItemData.Pic = others_icon;
+    ItemData.Account = others_account;
     ItemData.Name = others_name;
-    ItemData.ID = others_id;
+    ItemData.Pic = others_icon;
     this->AddFriend(ItemData);
 }
 
-void WF_FriendListView::Online(int others_id, QString others_name, QPixmap others_icon)
+void WF_FriendListView::sOnline(int others_account, QString others_name, QPixmap others_icon)
 {
-    qDebug() << "WF_MainWin Online: " << others_id << "-" << others_name << "-" << others_icon;
+    qDebug() << "WF_MainWin Online: " << others_account << "-" << others_name << "-" << others_icon;
+    user_icon_map.insert(others_account, others_icon);
     UserItemData ItemData;
     ItemData.Available = true;
-    ItemData.Pic = others_icon;
+    ItemData.Account = others_account;
     ItemData.Name = others_name;
-    ItemData.ID = others_id;
+    ItemData.Pic = others_icon;
     this->AddFriend(ItemData);
 }
 
-void WF_FriendListView::Offline(int others_id, QString others_name)
+void WF_FriendListView::sOffline(int others_account, QString others_name)
 {
     Q_UNUSED(others_name)
-    this->RemoveFriend(others_id);
+    this->RemoveFriend(others_account);
 }
 
-void WF_FriendListView::Notify(int sender_id, QString sender_name, int to_id, QString content, QString content_type)
+void WF_FriendListView::sNotify(int sender_account, QString sender_name, QPixmap icon, int to_account, QString content, QString content_type)
 {
     UserItemData senderItemdata;
     int indexInList;
     QString nameInMsg;
     QPixmap senderIcon;
-    //qDebug() << "(" << sender_id << "-" << sender_name << ") ---> " << to_id;
 
-    if (to_id == 0) {
-        senderItemdata = this->GetFriend(to_id);
-        indexInList = this->GetItemIndexInList(to_id);
-        UserItemData tmpItemdata = this->GetFriend(sender_id);
-        if (!tmpItemdata.Available) senderIcon = QPixmap(":/Res/Tomphany.jpg");
+    user_icon_map.insert(sender_account, icon);
+
+    if (to_account == 0) {
+        senderItemdata = this->GetFriend(to_account);
+        indexInList = this->GetItemIndexInList(to_account);
+        //UserItemData tmpItemdata = this->GetFriend(sender_account);
+        //if (!tmpItemdata.Available) senderIcon = icon;
+        senderIcon = icon;
         nameInMsg = sender_name;
     } else {
-        senderItemdata = this->GetFriend(sender_id);
-        indexInList = this->GetItemIndexInList(sender_id);
-        senderIcon = this->GetFriend(sender_id).Pic;
+        senderItemdata = this->GetFriend(sender_account);
+        indexInList = this->GetItemIndexInList(sender_account);
+        senderIcon = this->GetFriend(sender_account).Pic;
         nameInMsg = "";
     }
 
     if (!senderItemdata.Available || indexInList == -1) return;
 
     //qDebug() << __FUNCTION__ << "SenderItemData ID:" << senderItemdata.ID << " Name:" << senderItemdata.Name << " IndexInList:" << indexInList;
-    senderItemdata.HistoryMsg.push_back(sender_name + ":" + content_type + ":" + content);
+    senderItemdata.HistoryMsg.push_back(QString::number(sender_account) + ":" + sender_name + ":" + content_type + ":" + content);
     //qDebug() << __FUNCTION__ << "SenderItemData History Msg: " << senderItemdata.HistoryMsg.at(senderItemdata.HistoryMsg.size() - 1);
 
-    if (senderItemdata.ID != currentFriendItem_.ID) {
+    if (senderItemdata.Account != currentFriendItem_.Account) {
         senderItemdata.Unread = true;
     } else {
         if (content_type == "Content") {
-            if (sender_name == hostName_) {
+            if (sender_account == account_) {
                 emit AddSelfMessageSig(QPixmap(WF_DIR + "\\Self.jpg"), content, false);
             } else {
                 emit AddOthersMessageSig(senderIcon, nameInMsg, content, false);
             }
         } else if (content_type == "PicContent") {
-            if (sender_name == hostName_) {
+            if (sender_account == account_) {
                 emit AddSelfMessageSig(QPixmap(WF_DIR + "\\Self.jpg"), content, true);
             } else {
                 emit AddOthersMessageSig(senderIcon, nameInMsg, content, true);
@@ -212,12 +216,12 @@ void WF_FriendListView::Notify(int sender_id, QString sender_name, int to_id, QS
     this->SetFriend(indexInList, senderItemdata);
 }
 
-void WF_FriendListView::ChangedIcon(QString pic_path)
+void WF_FriendListView::sChangedIcon(QString pic_path)
 {
     UserItemData myItemdata;
-    myItemdata = this->GetFriend(myId_);
+    myItemdata = this->GetFriend(account_);
     myItemdata.Pic = QPixmap(pic_path);
-    this->SetFriend(this->GetItemIndexInList(myId_), myItemdata);
+    this->SetFriend(this->GetItemIndexInList(account_), myItemdata);
 }
 
 void WF_FriendListView::ListClick(QModelIndex index)

@@ -12,6 +12,7 @@
 #include <QDebug>
 #include <QStandardPaths>
 
+
 QString WF_DIR = "C:\\Users\\"+QStandardPaths::writableLocation(QStandardPaths::HomeLocation).section("/", -1, -1)+"\\Documents\\WeFishFiles";
 
 int main(int argc, char *argv[])
@@ -23,7 +24,7 @@ int main(int argc, char *argv[])
         wf_dir.mkdir(WF_DIR);
     }
 
-    QSize* LoginWinSize = new QSize(280, 350);
+    QSize* LoginWinSize = new QSize(280, 380);
     WF_LoginWin w(nullptr, LoginWinSize);
 
     w.show();

@@ -132,3 +132,152 @@ void WF_MinimizeButton::leaveEvent(QEvent *event)
     Q_UNUSED(event)
     this->setStyleSheet("QToolButton{border-image:url(:/Res/whiteMinimize.png);outset;}");
 }
+
+
+WF_LoginCloseButton::WF_LoginCloseButton(QWidget * parent, int x, int y) : QToolButton(parent)
+{
+
+    this->setStyleSheet("QToolButton{border-image:url(:/Res/loginWClose.png);outset;}");
+    this->setFixedSize(x,y);
+}
+
+WF_LoginCloseButton::~WF_LoginCloseButton()
+{
+}
+
+void WF_LoginCloseButton::mousePressEvent(QMouseEvent *event)
+{
+    Q_UNUSED(event)
+    emit clicked();
+    this->setStyleSheet("QToolButton{border-image:url(:/Res/RedClose.png);outset;}");
+}
+
+void WF_LoginCloseButton::mouseReleaseEvent(QMouseEvent *event)
+{
+    Q_UNUSED(event)
+    this->setStyleSheet("QToolButton{border-image:url(:/Res/RedClose.png);outset;}");
+}
+
+void WF_LoginCloseButton::enterEvent(QEvent *event)
+{
+    Q_UNUSED(event)
+    this->setStyleSheet("QToolButton{border-image:url(:/Res/RedClose.png);outset;}");
+}
+
+void WF_LoginCloseButton::leaveEvent(QEvent *event)
+{
+    Q_UNUSED(event)
+    this->setStyleSheet("QToolButton{border-image:url(:/Res/loginWClose.png);outset;}");
+}
+
+
+WF_LoginSettingButton::WF_LoginSettingButton(QWidget * parent, int x, int y) : QToolButton(parent)
+{
+
+    this->setStyleSheet("QToolButton{border-image:url(:/Res/loginWSetting.png);outset;}");
+    this->setFixedSize(x,y);
+}
+
+WF_LoginSettingButton::~WF_LoginSettingButton()
+{
+}
+
+void WF_LoginSettingButton::mousePressEvent(QMouseEvent *event)
+{
+    Q_UNUSED(event)
+    emit clicked();
+    this->setStyleSheet("QToolButton{border-image:url(:/Res/loginGSetting.png);outset;}");
+}
+
+void WF_LoginSettingButton::mouseReleaseEvent(QMouseEvent *event)
+{
+    Q_UNUSED(event)
+    this->setStyleSheet("QToolButton{border-image:url(:/Res/loginGSetting.png);outset;}");
+}
+
+void WF_LoginSettingButton::enterEvent(QEvent *event)
+{
+    Q_UNUSED(event)
+    this->setStyleSheet("QToolButton{border-image:url(:/Res/loginGSetting.png);outset;}");
+}
+
+void WF_LoginSettingButton::leaveEvent(QEvent *event)
+{
+    Q_UNUSED(event)
+    this->setStyleSheet("QToolButton{border-image:url(:/Res/loginWSetting.png);outset;}");
+}
+
+
+WF_ChatBoxEmojiButton::WF_ChatBoxEmojiButton(QWidget * parent, int x, int y) : QToolButton(parent)
+{
+
+    this->setStyleSheet("QToolButton{border-image:url(:/Res/ChatIconPkgWhite.png);outset;}");
+    this->setFixedSize(x,y);
+}
+
+WF_ChatBoxEmojiButton::~WF_ChatBoxEmojiButton()
+{
+}
+
+void WF_ChatBoxEmojiButton::mousePressEvent(QMouseEvent *event)
+{
+    Q_UNUSED(event)
+    emit clicked();
+    this->setStyleSheet("QToolButton{border-image:url(:/Res/ChatIconPkgGreen.png);outset;}");
+}
+
+void WF_ChatBoxEmojiButton::mouseReleaseEvent(QMouseEvent *event)
+{
+    Q_UNUSED(event)
+    this->setStyleSheet("QToolButton{border-image:url(:/Res/ChatIconPkgWhite.png);outset;}");
+}
+
+void WF_ChatBoxEmojiButton::enterEvent(QEvent *event)
+{
+    Q_UNUSED(event)
+    this->setStyleSheet("QToolButton{border-image:url(:/Res/ChatIconPkgBlack.png);outset;}");
+}
+
+void WF_ChatBoxEmojiButton::leaveEvent(QEvent *event)
+{
+    Q_UNUSED(event)
+    this->setStyleSheet("QToolButton{border-image:url(:/Res/ChatIconPkgWhite.png);outset;}");
+}
+
+
+WF_ChatBoxFileButton::WF_ChatBoxFileButton(QWidget * parent, int x, int y) : QToolButton(parent)
+{
+
+    this->setStyleSheet("QToolButton{border-image:url(:/Res/ChatFileWhite.png);outset;}");
+    this->setFixedSize(x,y);
+}
+
+WF_ChatBoxFileButton::~WF_ChatBoxFileButton()
+{
+}
+
+void WF_ChatBoxFileButton::mousePressEvent(QMouseEvent *event)
+{
+    Q_UNUSED(event)
+    emit clicked();
+    this->setStyleSheet("QToolButton{border-image:url(:/Res/ChatFileGreen.png);outset;}");
+}
+
+void WF_ChatBoxFileButton::mouseReleaseEvent(QMouseEvent *event)
+{
+    Q_UNUSED(event)
+    this->setStyleSheet("QToolButton{border-image:url(:/Res/ChatFileWhite.png);outset;}");
+}
+
+void WF_ChatBoxFileButton::enterEvent(QEvent *event)
+{
+    Q_UNUSED(event)
+    this->setStyleSheet("QToolButton{border-image:url(:/Res/ChatFileBlack.png);outset;}");
+}
+
+void WF_ChatBoxFileButton::leaveEvent(QEvent *event)
+{
+    Q_UNUSED(event)
+    this->setStyleSheet("QToolButton{border-image:url(:/Res/ChatFileWhite.png);outset;}");
+}
+

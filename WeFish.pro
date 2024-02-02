@@ -16,28 +16,37 @@ DEFINES += QT_DEPRECATED_WARNINGS
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
+    common/base64.cc \
     main.cpp \
+    wf_browser.cpp \
     wf_button.cpp \
     wf_chatinput.cpp \
     wf_chatview.cpp \
+    wf_filesocket.cpp \
     wf_flistview.cpp \
     wf_loginwin.cpp \
+    wf_mainsocket.cpp \
     wf_mainwin.cpp \
     wf_misc.cpp \
-    wf_tcpsocket.cpp
+    wf_upgraderwin.cpp
 
 HEADERS += \
+    common/base64.hpp \
     common/json.h \
     common/jsonrpcpp.h \
     common/wf_message.h \
+    wf_browser.h \
     wf_button.h \
     wf_chatinput.h \
     wf_chatview.h \
+    wf_config.h \
+    wf_filesocket.h \
     wf_flistview.h \
     wf_loginwin.h \
+    wf_mainsocket.h \
     wf_mainwin.h \
     wf_misc.h \
-    wf_tcpsocket.h
+    wf_upgraderwin.h
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
@@ -52,3 +61,7 @@ DISTFILES += \
     hoky.ico
 
 RC_FILE = exe_ico.rc
+
+INCLUDEPATH += $$PWD/.
+
+LIBS += -L$$PWD/. -lLibCryptor
