@@ -174,7 +174,9 @@ void WF_FriendListView::sNotify(int sender_account, QString sender_name, QPixmap
     QString nameInMsg;
     QPixmap senderIcon;
 
-    user_icon_map.insert(sender_account, icon);
+    if (content_type != "FileContent") {
+        user_icon_map.insert(sender_account, icon);
+    }
 
     if (to_account == 0) {
         senderItemdata = this->GetFriend(to_account);
@@ -192,7 +194,7 @@ void WF_FriendListView::sNotify(int sender_account, QString sender_name, QPixmap
 
     if (!senderItemdata.Available || indexInList == -1) return;
 
-    //qDebug() << __FUNCTION__ << "SenderItemData ID:" << senderItemdata.ID << " Name:" << senderItemdata.Name << " IndexInList:" << indexInList;
+    //qDebug() << __FUNCTION__ << "Sender Account:" << senderItemdata.Account << " Name:" << senderItemdata.Name << " IndexInList:" << indexInList;
     senderItemdata.HistoryMsg.push_back(QString::number(sender_account) + ":" + sender_name + ":" + content_type + ":" + content);
     //qDebug() << __FUNCTION__ << "SenderItemData History Msg: " << senderItemdata.HistoryMsg.at(senderItemdata.HistoryMsg.size() - 1);
 
@@ -210,6 +212,12 @@ void WF_FriendListView::sNotify(int sender_account, QString sender_name, QPixmap
                 emit AddSelfMessageSig(QPixmap(WF_DIR + "\\Self.jpg"), content, true);
             } else {
                 emit AddOthersMessageSig(senderIcon, nameInMsg, content, true);
+            }
+        } else if (content_type == "FileContent") {
+            if (sender_account == account_) {
+                emit AddSelfMessageSig(QPixmap(WF_DIR + "\\Self.jpg"), content, false);
+            } else {
+                emit AddOthersMessageSig(senderIcon, nameInMsg, content, false);
             }
         }
     }

@@ -152,7 +152,7 @@ void WF_MainSocket::doStateChange(QAbstractSocket::SocketState state)
 
 void WF_MainSocket::doConnect()
 {
-    qDebug() << "Connected";
+    qDebug() << "Main Socket Connected";
 }
 
 void WF_MainSocket::doPermission(int account, QString password)

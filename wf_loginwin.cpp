@@ -55,11 +55,12 @@ WF_LoginWin::WF_LoginWin(QWidget *parent, QSize* frameSize)
 
     doSetupNetwork();
 
-    doVaildate();
-
-    FileSocket = new WF_FileSocket("10.13.3.28", 6699, cryptor_);
+    QString FileSocketIP = configSetting->value("Network/SERVER_IP", WF_SERVER_IP).toString();
+    int FileSocketPort = configSetting->value("Network/SERVER_PORT", WF_SERVER_PORT).toInt();
+    int FileSocketAccount = configSetting->value("User/ACCOUNT", 0).toInt();
+    FileSocket = new WF_FileSocket(FileSocketIP, FileSocketPort + 1, cryptor_);
     UpgraderWin = new WF_UpgraderWin(this, FileSocket);
-    FileSocket->doSayhello(522001, "2.0");
+    FileSocket->doSayhello(FileSocketAccount, WF_VERSION);
 
     LoginButton = new QPushButton(this);
     LoginButton->setGeometry((frameSize_->width() - 180) / 2, 265, 180, 35);
@@ -89,16 +90,7 @@ WF_LoginWin::WF_LoginWin(QWidget *parent, QSize* frameSize)
     connect(LoginRegisterWin, SIGNAL(eUserRegister(QString, QString, QString, QString)), this, SLOT(sUserRegister(QString, QString, QString, QString)));
     connect(LoginSwitchWin, SIGNAL(eUserSwitch(QString, QString)), this, SLOT(sUserSwitch(QString, QString)));
 
-    connect(MainSocket, SIGNAL(eConnected()), this, SLOT(sConnected()));
-    connect(MainSocket, SIGNAL(eUnconnected()), this, SLOT(sUnconnected()));
-    connect(MainSocket, SIGNAL(eRegistered(int, QString, QString)), this, SLOT(sRegistered(int, QString, QString)));
-    connect(MainSocket, SIGNAL(eExpired(int, QString)), this, SLOT(sExpired(int, QString)));
-    connect(MainSocket, SIGNAL(eRejected(int)), this, SLOT(sRejected(int)));
-    connect(MainSocket, SIGNAL(eValidate(int, int, QString, QString)), this, SLOT(sValidate(int, int, QString, QString)));
-    connect(MainSocket, SIGNAL(eInvalidate(int)), this, SLOT(sInvalidate(int)));
-
     connect(FileSocket, SIGNAL(eVersionExpired()), this, SLOT(sVersionExpired()));
-    //connect(FileSocket, SIGNAL(eUpgradeProgressChanged(int)), UpgraderWin, SLOT(sProgressUpdate(int)));
 }
 
 WF_LoginWin::~WF_LoginWin()
@@ -143,6 +135,13 @@ void WF_LoginWin::doSetupNetwork()
         qDebug() << "Server IP: " + ip_;
         qDebug() << "Server Port: " + QString::number(port_);
         MainSocket = new WF_MainSocket(ip_, port_, cryptor_);
+        connect(MainSocket, SIGNAL(eConnected()), this, SLOT(sConnected()));
+        connect(MainSocket, SIGNAL(eUnconnected()), this, SLOT(sUnconnected()));
+        connect(MainSocket, SIGNAL(eRegistered(int, QString, QString)), this, SLOT(sRegistered(int, QString, QString)));
+        connect(MainSocket, SIGNAL(eExpired(int, QString)), this, SLOT(sExpired(int, QString)));
+        connect(MainSocket, SIGNAL(eRejected(int)), this, SLOT(sRejected(int)));
+        connect(MainSocket, SIGNAL(eValidate(int, int, QString, QString)), this, SLOT(sValidate(int, int, QString, QString)));
+        connect(MainSocket, SIGNAL(eInvalidate(int)), this, SLOT(sInvalidate(int)));
     }
 }
 
@@ -165,7 +164,6 @@ void WF_LoginWin::doConfigure()
 {
     wf_config_file_ = new QFile(WF_ConfigPath_);
     if (wf_config_file_->exists()) {
-        //host_name_ = configSetting->value("User/HOSTNAME", "Hoky").toString();
         ip_ = configSetting->value("Network/SERVER_IP", "10.13.3.23").toString();
         port_ = configSetting->value("Network/SERVER_PORT", 6688).toInt();
         qDebug() << "Succeed to Read Config";
@@ -184,7 +182,7 @@ void WF_LoginWin::doLogin()
         return;
     }
     MainSocket->doSayhello(account_);
-    MainWin = new WF_MainWin(this, this->MainSocket, UserIconUrl);
+    MainWin = new WF_MainWin(this, this->MainSocket, this->FileSocket, UserIconUrl);
     MainWin->setGeometry((mainMonitorSize_->width() - mainWinSize_->width()) / 2,
                          (mainMonitorSize_->height() - mainWinSize_->height()) / 2,
                          mainWinSize_->width(),
@@ -219,6 +217,7 @@ void WF_LoginWin::sUpdateNetworkConfig()
 void WF_LoginWin::sConnected()
 {
     network_ready_ = true;
+    doVaildate();
 }
 
 void WF_LoginWin::sUnconnected()
@@ -298,21 +297,4 @@ void WF_LoginWin::sVersionExpired()
     UpgraderWin->setGeometry(this->pos().rx() - 100, this->pos().ry(), 500, 300);
     UpgraderWin->show();
     UpgraderWin->doUpgradeRequest();
-
-//    QMessageBox UpgraderBox(QMessageBox::NoIcon, "WeFish Upgrader", "新版本是否更新？", QMessageBox::Yes|QMessageBox::No, NULL);
-//    switch (UpgraderBox.exec()) {
-//    case QMessageBox::Yes:
-//        qDebug() << "yes";
-//        this->hide();
-//        UpgraderWin->setGeometry(this->pos().rx() - 100, this->pos().ry(), 500, 300);
-//        UpgraderWin->show();
-//        UpgraderWin->doUpgradeRequest();
-
-//        break;
-//    case QMessageBox::No:
-//        qDebug() << "no";
-//        break;
-//    default:
-//        break;
-//    }
 }

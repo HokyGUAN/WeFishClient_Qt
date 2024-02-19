@@ -280,4 +280,3 @@ void WF_ChatBoxFileButton::leaveEvent(QEvent *event)
     Q_UNUSED(event)
     this->setStyleSheet("QToolButton{border-image:url(:/Res/ChatFileWhite.png);outset;}");
 }
-

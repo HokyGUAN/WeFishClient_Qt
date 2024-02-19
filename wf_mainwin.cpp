@@ -6,6 +6,7 @@
  *
 ***********************************/
 #include "wf_mainwin.h"
+#include "common/base64.hpp"
 
 #include <QPainter>
 #include <QDebug>
@@ -15,11 +16,13 @@
 #include <QScreen>
 
 
-WF_MainWin::WF_MainWin(QWidget *parent, WF_MainSocket* mainSocket, QString UserIconUrl)
+WF_MainWin::WF_MainWin(QWidget *parent, WF_MainSocket* mainSocket,
+                       WF_FileSocket* fileSocket, QString UserIconUrl)
     : QWidget(nullptr)
     , width_(920)
     , height_(635)
     , MainSocket(mainSocket)
+    , FileSocket(fileSocket)
     , userIconUrl_(UserIconUrl)
 {
     Q_UNUSED(parent)
@@ -97,6 +100,7 @@ WF_MainWin::WF_MainWin(QWidget *parent, WF_MainSocket* mainSocket, QString UserI
     connect(MainSocket, SIGNAL(eNotify(int, QString, QPixmap, int, QString, QString)), FriendList, SLOT(sNotify(int, QString, QPixmap, int, QString, QString)));
     connect(MainSocket, &WF_MainSocket::applicationshutdown, this, &WF_MainWin::ApplicationShutDown);
     connect(MainSocket, &WF_MainSocket::servershutdown, this, &WF_MainWin::ApplicationShutDown);
+    connect(FileSocket, SIGNAL(eNotify(int, QString, QPixmap, int, QString, QString)), FriendList, SLOT(sNotify(int, QString, QPixmap, int, QString, QString)));
     connect(ChatView, SIGNAL(PictureContentClicked(QPixmap)), this, SLOT(PictureBrowser(QPixmap)));
     connect(Setting, SIGNAL(eChangedIcon(QString)), FriendList, SLOT(sChangedIcon(QString)));
     connect(Setting, &WF_Setting::eChangedIcon, [=](QString imagePath) {this->UserIcon->setPixmap(QPixmap(imagePath).scaled(40, 40));});
@@ -164,11 +168,9 @@ void WF_MainWin::Send()
                                                                   "Content", msg.toUtf8())));
         msg = QString(request->to_json().dump().data());
 
-        //QByteArray byteArray = msg.toUtf8();
-        //byteArray = byteArray.toBase64();
         QByteArray cipher = MainSocket->cryptor_.Encrypt(msg.toUtf8());
         msg = cipher + "\r\n";
-        qDebug() << "Sent: " << msg.toUtf8();
+
         MainSocket->socket->write(msg.toUtf8());
 
         if (content_type == "PicContent") {
@@ -183,9 +185,70 @@ void WF_MainWin::Send()
 
 void WF_MainWin::doSendFile()
 {
+    bool head = true;
     QString FilePath = QFileDialog::getOpenFileName(this,"Choose File","","All(*.*)");
+    if (FilePath == "") return;
 
-    qDebug() << "Path: " << FilePath;
+    myItemdata_ = FriendList->GetFriend(account_);
+    UserItemData Friend = FriendList->GetFriend(currentItemAccount_);
+    int FriendindexInList = FriendList->GetItemIndexInList(currentItemAccount_);
+
+    QFile file_stream(FilePath);
+    if (!file_stream.open(QIODevice::ReadOnly)) {
+        return;
+    }
+    int file_size = file_stream.size();
+
+    QString checksum = "b60b0ce5bbab49f5ec134022ed7a908e";
+    QStringList list = FilePath.split("/", QString::SkipEmptyParts);
+    QString file_name = list.at(list.size() - 1);
+
+    QString file_location = WF_DIR + "\\" + file_name;
+    file_location = file_location.replace("\\", "/");
+    file_location = file_location.replace(":", "");
+
+    Friend.HistoryMsg.push_back(QString::number(myItemdata_.Account) + ":" + myItemdata_.Name + \
+                                ":Content:" + file_location);
+    FriendList->SetFriend(FriendindexInList, Friend);
+
+    int data_consume = 0;
+
+    jsonrpcpp::request_ptr request(nullptr);
+#define M_BLOCK_SIZE 3000000
+    int block_size = M_BLOCK_SIZE;
+    while (!file_stream.atEnd()) {
+        if (head) {
+            head = false;
+            request.reset(new jsonrpcpp::Request(jsonrpcpp::Id(MESSAGE_TYPE_FILE), "FileTransfer",
+                            jsonrpcpp::Parameter("Account", account_, "Name", MainSocket->name_.toStdString(), "ToAccount", currentItem_.Account, "Status", 1,
+                                                "Filename", file_name.toStdString(), "Filesize", file_size, "Checksum", checksum.toStdString(),
+                                                "Content", "")));
+        } else {
+            if (file_size - data_consume < block_size) {
+                block_size = file_size - data_consume;
+                QByteArray content = file_stream.read(block_size);
+                std::string encrypt = CBASE64::Encode(content.data(), content.size());
+                request.reset(new jsonrpcpp::Request(jsonrpcpp::Id(MESSAGE_TYPE_FILE), "FileTransfer",
+                    jsonrpcpp::Parameter("Account", account_, "Name", MainSocket->name_.toStdString(), "ToAccount", currentItem_.Account, "Status", 0,
+                                        "Filename", file_name.toStdString(), "Filesize", file_size, "Checksum", checksum.toStdString(),
+                                        "Content", encrypt)));
+                data_consume += block_size;
+                ChatView->AppendSelfMessage(myItemdata_.Pic, file_location, false);
+            } else {
+                QByteArray content = file_stream.read(block_size);
+                std::string encrypt = CBASE64::Encode(content.data(), content.size());
+                request.reset(new jsonrpcpp::Request(jsonrpcpp::Id(MESSAGE_TYPE_FILE), "FileTransfer",
+                    jsonrpcpp::Parameter("Account", account_, "Name", MainSocket->name_.toStdString(), "ToAccount", currentItem_.Account, "Status", 2,
+                                        "Filename", file_name.toStdString(), "Filesize", file_size, "Checksum", checksum.toStdString(),
+                                        "Content", encrypt)));
+                data_consume += block_size;
+            }
+        }
+
+        QString msg = QString(request->to_json().dump().data());
+        FileSocket->doSend(msg);
+    }
+    file_stream.close();
 }
 
 void WF_MainWin::Flush(UserItemData itemdata)

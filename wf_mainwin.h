@@ -15,6 +15,7 @@
 #include "wf_flistview.h"
 #include "wf_chatinput.h"
 #include "wf_mainsocket.h"
+#include "wf_filesocket.h"
 #include "wf_browser.h"
 #include "wf_misc.h"
 
@@ -22,7 +23,8 @@ class WF_MainWin : public QWidget
 {
     Q_OBJECT
 public:
-    explicit WF_MainWin(QWidget *parent = nullptr, WF_MainSocket* mainSocket = nullptr, QString UserIconUrl = NULL);
+    explicit WF_MainWin(QWidget *parent = nullptr, WF_MainSocket* mainSocket = nullptr,
+                        WF_FileSocket* fileSocket = nullptr, QString UserIconUrl = NULL);
     ~WF_MainWin();
 
     void paintEvent(QPaintEvent *event);
@@ -97,6 +99,7 @@ private:
     WF_ChatBoxEmojiButton* ChatBoxEmojiButton;
     WF_ChatBoxFileButton* ChatBoxFileButton;
     WF_MainSocket* MainSocket;
+    WF_FileSocket* FileSocket;
     WF_ImageHandler* ImageHandler;
 
     int account_;

@@ -56,6 +56,7 @@ public:
     void doDisConnect();
     void doSayhello(int account, QString clientversion);
     void doUpgradeRequest();
+    void doSend(QString msg);
 
 signals:
     void eConnected();

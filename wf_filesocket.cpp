@@ -28,7 +28,6 @@ void WF_FileSocket::Initialise()
 {
     socket = new QTcpSocket(this);
 
-    //socket->setProxy(QNetworkProxy::NoProxy);
     socket->connectToHost(QHostAddress(ip_), port_);
 
     connect(socket, &QTcpSocket::connected, this, &WF_FileSocket::doConnect);
@@ -60,7 +59,6 @@ void WF_FileSocket::doMessageReceived(QString const &msg)
                 doUpgradeFileTransfer();
             } else if (param->get("Method") == "UpgradeProcessing") {
                 int process = param->get("Process");
-                qDebug() << "Process: " << process;
 
                 std::string content = CBASE64::Decode(param->get("Content"));
                 QByteArray decrypt(QByteArray::fromRawData(content.c_str(), content.size()));
@@ -70,7 +68,7 @@ void WF_FileSocket::doMessageReceived(QString const &msg)
                 if (process < 100) {
                     doUpgradeFileTransfer();
                 } else {
-                    QFile file_stream(WF_DIR + "\\upgrade_test.exe");
+                    QFile file_stream(WF_DIR + "\\WeFish.exe");
                     file_stream.open(QIODevice::WriteOnly);
                     QByteArray data = upgrade_stream_->Pop();
                     file_stream.write(data, data.size());
@@ -78,41 +76,49 @@ void WF_FileSocket::doMessageReceived(QString const &msg)
                 }
             }
         } else if (entity->is_notification()) {
-//            jsonrpcpp::notification_ptr notification = std::dynamic_pointer_cast<jsonrpcpp::Notification>(entity);
-//            if (notification->method() == "FileTransferNotification") {
-//                int from_account = notification->params().get("Account");
-//                int to_account = notification->params().get("ToAccount");
-//                QString file_name = QString::fromStdString(notification->params().get("Filename"));
-//                QString checksum = QString::fromStdString(notification->params().get("Checksum"));
-//                int file_size = notification->params().get("Filesize");
-//                QString content = QString::fromStdString(notification->params().get("Content"));
-//                int status = notification->params().get("Status");
-
+            jsonrpcpp::notification_ptr notification = std::dynamic_pointer_cast<jsonrpcpp::Notification>(entity);
+            if (notification->method() == "FileTransferNotification") {
+                int from_account = notification->params().get("Account");
+                QString name = QString::fromStdString(notification->params().get("Name"));
+                int to_account = notification->params().get("ToAccount");
+                QString file_name = QString::fromStdString(notification->params().get("Filename"));
+                QString checksum = QString::fromStdString(notification->params().get("Checksum"));
+                size_t file_size = notification->params().get("Filesize");
+                std::string content = CBASE64::Decode(notification->params().get("Content"));
+                int status = notification->params().get("Status");
+                QByteArray decrypt(QByteArray::fromRawData(content.c_str(), content.size()));
 //                qDebug() << "Account: " << from_account;
 //                qDebug() << "ToAccount: " << to_account;
 //                qDebug() << "Filename: " << file_name;
 //                qDebug() << "Filesize: " << file_size;
 //                qDebug() << "Checksum: " << checksum;
-//                qDebug() << "Content: " << content;
+//                qDebug() << "Content: " << decrypt;
 //                qDebug() << "Status: " << status;
 
-//                auto it = container_.find(checksum);
-//                if (status == 1 && it == container_.end()) {
-//                    QSharedPointer<FileStream> file_stream = QSharedPointer<FileStream>(new FileStream(file_name));
-//                    // file_stream->Push(content);
-//                    container_.insert(checksum, file_stream);
-//                } else if (status == 2 && it != container_.end()) {
-//                    (it.value())->Push(content);
-//                } else if (status == 0 && it != container_.end()) {
-//                    (it.value())->Push(content);
-//                    QFile file_stream(file_name);
-//                    file_stream.open(QIODevice::WriteOnly|QIODevice::Truncate);
-//                    QDataStream out(&file_stream);
-//                    out << (it.value())->Pop();
-//                    file_stream.close();
-//                    container_.erase(it);
-//                }
-//            }
+                int process = 0;;
+                auto it = container_.find(checksum);
+                if (status == 1 && it == container_.end()) {
+                    QSharedPointer<FileStream> file_stream = QSharedPointer<FileStream>(new FileStream(file_name));
+                    container_.insert(checksum, file_stream);
+                } else if (status == 2 && it != container_.end()) {
+                    (it.value())->Push(decrypt);
+                    process = ((size_t)(it.value())->Size() * 100) / file_size;
+                } else if (status == 0 && it != container_.end()) {
+                    (it.value())->Push(decrypt);
+                    process = ((size_t)(it.value())->Size() * 100) / file_size;
+
+                    QString file_location = WF_DIR + "\\" + file_name;
+                    QFile file_stream(file_location);
+                    file_location = file_location.replace("\\", "/");
+                    file_location = file_location.replace(":", "");
+                    file_stream.open(QIODevice::WriteOnly|QIODevice::Truncate);
+                    QByteArray data = (it.value())->Pop();
+                    file_stream.write(data, data.size());
+                    file_stream.close();
+                    container_.erase(it);
+                    emit eNotify(from_account, name, QPixmap(), to_account, file_location, "FileContent");
+                }
+            }
         } else {
             qDebug() << "Not registered feedback\n";
         }
@@ -147,8 +153,8 @@ void WF_FileSocket::doSayhello(int account, QString clientversion)
     request.reset(new jsonrpcpp::Request(jsonrpcpp::Id(MESSAGE_TYPE_SETTING), "SayHello",
         jsonrpcpp::Parameter("Account", account, "Clientversion", clientversion.toUtf8())));
     QString msg = QString(request->to_json().dump().data());
-    //QByteArray cipher = cryptor_.Encrypt(msg.toUtf8());
-    msg = msg + "\r\n";
+    QByteArray cipher = cryptor_.Encrypt(msg.toUtf8());
+    msg = cipher + "\r\n";
     socket->write(msg.toUtf8());
 }
 
@@ -158,8 +164,8 @@ void WF_FileSocket::doUpgradeRequest()
     request.reset(new jsonrpcpp::Request(jsonrpcpp::Id(MESSAGE_TYPE_SETTING), "UpgradeRequest",
         jsonrpcpp::Parameter("Account", account_)));
     QString msg = QString(request->to_json().dump().data());
-    //QByteArray cipher = cryptor_.Encrypt(msg.toUtf8());
-    msg = msg + "\r\n";
+    QByteArray cipher = cryptor_.Encrypt(msg.toUtf8());
+    msg = cipher + "\r\n";
     socket->write(msg.toUtf8());
 }
 
@@ -169,8 +175,15 @@ void WF_FileSocket::doUpgradeFileTransfer()
     request.reset(new jsonrpcpp::Request(jsonrpcpp::Id(MESSAGE_TYPE_FILE), "UpgradeFileTransfer",
         jsonrpcpp::Parameter("Account", account_)));
     QString msg = QString(request->to_json().dump().data());
-    //QByteArray cipher = cryptor_.Encrypt(msg.toUtf8());
-    msg = msg + "\r\n";
+    QByteArray cipher = cryptor_.Encrypt(msg.toUtf8());
+    msg = cipher + "\r\n";
+    socket->write(msg.toUtf8());
+}
+
+void WF_FileSocket::doSend(QString msg)
+{
+    QByteArray cipher = cryptor_.Encrypt(msg.toUtf8());
+    msg = cipher + "\r\n";
     socket->write(msg.toUtf8());
 }
 
@@ -192,12 +205,12 @@ void WF_FileSocket::doRead()
     QStringListIterator strIterator(strList);
     while (strIterator.hasNext()) {
         QString msg = strIterator.next();
-        //QString decrypt = cryptor_.Decrypt(msg.toUtf8());
-        doMessageReceived(msg.toUtf8());
+        QString decrypt = cryptor_.Decrypt(msg.toUtf8());
+        doMessageReceived(decrypt.toUtf8());
     }
 }
 
 void WF_FileSocket::doDisConnect()
 {
-    qDebug() << "Disconnected";
+    qDebug() << "File Socket Disconnected";
 }
