@@ -68,4 +68,5 @@ void WF_UpgraderWin::sProgressUpdate(int percent)
 void WF_UpgraderWin::doUpgradeComplete()
 {
     qDebug() << "UpgradeComplete";
+    this->close();
 }

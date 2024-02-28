@@ -320,7 +320,7 @@ void WF_LoginSwitchWin::doUserSwitch()
     if (AccountLineEdit->text() == "" || PasswordLineEdit->text() == "") {
         QMessageBox::information(this, "WeFish Info", "不能为空！", QMessageBox::Yes);
     } else {
-        eUserSwitch(AccountLineEdit->text(), PasswordLineEdit->text());
+        emit eUserSwitch(AccountLineEdit->text(), PasswordLineEdit->text());
         this->close();
     }
 }

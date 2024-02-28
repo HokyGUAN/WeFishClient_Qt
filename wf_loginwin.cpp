@@ -164,8 +164,8 @@ void WF_LoginWin::doConfigure()
 {
     wf_config_file_ = new QFile(WF_ConfigPath_);
     if (wf_config_file_->exists()) {
-        ip_ = configSetting->value("Network/SERVER_IP", "10.13.3.23").toString();
-        port_ = configSetting->value("Network/SERVER_PORT", 6688).toInt();
+        ip_ = configSetting->value("Network/SERVER_IP", WF_SERVER_IP).toString();
+        port_ = configSetting->value("Network/SERVER_PORT", WF_SERVER_PORT).toInt();
         qDebug() << "Succeed to Read Config";
         qDebug() << "Server IP: " + ip_;
         qDebug() << "Server Port: " + QString::number(port_);
@@ -287,12 +287,15 @@ void WF_LoginWin::sInvalidate(int status_code)
 {
     qDebug() << "Invalidate - Status Code: " << status_code;
     account_validated_ = false;
-    doSwitch();
+    if (!version_expired_) {
+        doSwitch();
+    }
 }
 
 void WF_LoginWin::sVersionExpired()
 {
     qDebug() << "Version Expired!!!";
+    version_expired_ = true;
     this->hide();
     UpgraderWin->setGeometry(this->pos().rx() - 100, this->pos().ry(), 500, 300);
     UpgraderWin->show();

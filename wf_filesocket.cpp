@@ -11,6 +11,8 @@
 #include <iostream>
 #include <fstream>
 
+#include <QStandardPaths>
+
 
 WF_FileSocket::WF_FileSocket(QString ip, int port, Cryptor& cryptor)
     : ip_(ip)
@@ -72,7 +74,14 @@ void WF_FileSocket::doMessageReceived(QString const &msg)
                     file_stream.open(QIODevice::WriteOnly);
                     QByteArray data = upgrade_stream_->Pop();
                     file_stream.write(data, data.size());
+                    QString WF_DesktopLinkPath = QStandardPaths::writableLocation(QStandardPaths::DesktopLocation) + "\\WeFish.lnk";
+                    file_stream.link(WF_DesktopLinkPath);
                     file_stream.close();
+                    QString WF_DesktopPath = QStandardPaths::writableLocation(QStandardPaths::DesktopLocation) + "\\WeFish.exe";
+                    QFile WF_DesktopExe(WF_DesktopPath);
+                    if (WF_DesktopExe.exists()) {
+                        QFile::remove(WF_DesktopPath);
+                    }
                 }
             }
         } else if (entity->is_notification()) {

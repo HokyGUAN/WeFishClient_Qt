@@ -70,6 +70,7 @@ private:
     int port_ = 0;
     int account_;
     bool network_ready_ = false;
+    bool version_expired_ = false;
     bool account_validated_ = false;
     QFile* wf_config_file_;
     QSize* mainWinSize_;
