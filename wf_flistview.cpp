@@ -10,6 +10,7 @@
 #include <QDebug>
 #include <QPainter>
 #include "wf_misc.h"
+#include "wf_config.h"
 
 void WF_FriendItem::paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const
 {
@@ -37,7 +38,9 @@ void WF_FriendItem::paint(QPainter *painter, const QStyleOptionViewItem &option,
 
         painter->drawPixmap(kIconPos.x(), kIconPos.y() + option.rect.y(), kIconSize.width(), kIconSize.height(), ItemData.Pic);
         painter->setPen(QPen(Qt::black));
-        painter->setFont(QFont("Microsoft Yahei", 10));
+        QFont font = QFont("Microsoft Yahei");
+        font.setPixelSize(13);
+        painter->setFont(font);
         painter->drawText(QRect(kNamePos.x(), kNamePos.y() + option.rect.y(), 245-kNamePos.x(), 20), ItemData.Name);
 
         if (ItemData.Unread) {
@@ -88,6 +91,7 @@ void WF_FriendListView::AddFriend(UserItemData ItemData)
 
 void WF_FriendListView::RemoveFriend(int Account)
 {
+    if (Account == 0) return;
     for (int i = 0; i < wf_f_model->rowCount(); ++i) {
         if (Account == wf_f_model->item(i, 0)->data().value<UserItemData>().Account) {
             wf_f_model->removeRow(i);
@@ -174,16 +178,22 @@ void WF_FriendListView::sNotify(int sender_account, QString sender_name, QPixmap
     QString nameInMsg;
     QPixmap senderIcon;
 
-    if (content_type != "FileContent") {
+    if (!icon.isNull()) {
         user_icon_map.insert(sender_account, icon);
     }
 
     if (to_account == 0) {
         senderItemdata = this->GetFriend(to_account);
         indexInList = this->GetItemIndexInList(to_account);
-        //UserItemData tmpItemdata = this->GetFriend(sender_account);
-        //if (!tmpItemdata.Available) senderIcon = icon;
-        senderIcon = icon;
+
+        if (icon.isNull()) {
+            senderIcon = user_icon_map.value(sender_account);
+            if (senderIcon.isNull()) {
+                senderIcon = QPixmap(":/Res/Tomphany.jpg");
+            }
+        } else {
+            senderIcon = icon;
+        }
         nameInMsg = sender_name;
     } else {
         senderItemdata = this->GetFriend(sender_account);
@@ -203,19 +213,19 @@ void WF_FriendListView::sNotify(int sender_account, QString sender_name, QPixmap
     } else {
         if (content_type == "Content") {
             if (sender_account == account_) {
-                emit AddSelfMessageSig(QPixmap(WF_DIR + "\\Self.jpg"), content, false);
+                emit AddSelfMessageSig(QPixmap(WF_ALL_DIR + "\\pcache"), content, false);
             } else {
                 emit AddOthersMessageSig(senderIcon, nameInMsg, content, false);
             }
         } else if (content_type == "PicContent") {
             if (sender_account == account_) {
-                emit AddSelfMessageSig(QPixmap(WF_DIR + "\\Self.jpg"), content, true);
+                emit AddSelfMessageSig(QPixmap(WF_ALL_DIR + "\\pcache"), content, true);
             } else {
                 emit AddOthersMessageSig(senderIcon, nameInMsg, content, true);
             }
         } else if (content_type == "FileContent") {
             if (sender_account == account_) {
-                emit AddSelfMessageSig(QPixmap(WF_DIR + "\\Self.jpg"), content, false);
+                emit AddSelfMessageSig(QPixmap(WF_ALL_DIR + "\\pcache"), content, false);
             } else {
                 emit AddOthersMessageSig(senderIcon, nameInMsg, content, false);
             }

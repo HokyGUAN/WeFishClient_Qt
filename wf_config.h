@@ -1,7 +1,8 @@
 #ifndef WF_CONFIG_H
 #define WF_CONFIG_H
 
-#define WF_VERSION "D_20240221_1"
+
+#define WF_VERSION "D_20240307_1"
 
 #define WF_SERVER_IP "10.13.3.28"
 #define WF_SERVER_PORT 26689

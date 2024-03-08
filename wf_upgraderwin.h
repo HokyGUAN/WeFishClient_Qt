@@ -18,19 +18,17 @@ class WF_UpgraderWin : public WF_BaseWin
 {
     Q_OBJECT
 public:
-    WF_UpgraderWin(QWidget *parent, WF_FileSocket* fileSocket);
+    WF_UpgraderWin(QWidget *parent);
     ~WF_UpgraderWin() {};
 
     void paintEvent(QPaintEvent *event);
 
-    void doUpgradeRequest();
     void doUpgradeComplete();
 
 private:
     QLabel *Percentage;
     QProgressBar *Bar;
     QPushButton *UpgradedButton;
-    WF_FileSocket *FileSocket;
 
 private slots:
     void sProgressUpdate(int percent);

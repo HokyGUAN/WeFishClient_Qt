@@ -57,6 +57,7 @@ SelfMsgFrameItem::SelfMsgFrameItem(QPixmap icon, QString msg, int width, bool is
     icon_.setPos(IconPos_);
 
     font_ = QFont("Microsoft YaHei");
+    font_.setPixelSize(14);
     icon_.setParentItem(this);
 }
 
@@ -177,7 +178,7 @@ OthersMsgFrameItem::OthersMsgFrameItem(QPixmap icon,QString name, QString msg, b
     icon_.setPos(kIconPos);
     icon_.setParentItem(this);
 
-    font_ = QFont("Microsoft YaHei");
+    font_ = QFont("Microsoft YaHei", 14);
     font_.setPixelSize(kNameFontSize);
 
     if (name != "") {

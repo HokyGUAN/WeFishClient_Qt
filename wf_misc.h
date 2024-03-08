@@ -38,7 +38,9 @@
 
 
 extern QString WF_DIR;
-
+extern QString WF_ALL_DIR;
+extern QString WF_CONF_DIR;
+extern QString WF_UPDT_DIR;
 typedef enum e_shutdownReason {
     REASON_USERCONFLICT = 0,
     REASON_SERVERLOST,

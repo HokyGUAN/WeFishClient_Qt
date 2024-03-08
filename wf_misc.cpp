@@ -6,8 +6,10 @@
  *
 ***********************************/
 #include "wf_misc.h"
+#include "wf_config.h"
 #include "QMouseEvent"
 #include <QDebug>
+
 
 WF_ImageHandler::WF_ImageHandler()
 {
@@ -106,7 +108,7 @@ void WF_Setting::sChangeIcon()
                                                   "*Image Files(*.jpg;*.png;*.bmp);;All(*.*)");
     if (Image_Path != "") {
         QPixmap icon(Image_Path);
-        icon.save(WF_DIR + "\\Self.jpg");
+        icon.save(WF_ALL_DIR + "\\pcache");
 
         emit eChangedIcon(Image_Path);
     }
@@ -119,29 +121,32 @@ WF_LoginSettingWin::WF_LoginSettingWin(QWidget * parent) : WF_BaseWin(nullptr)
     this->setMaximumSize(280, 320);
     this->CloseButton->setGeometry(247, 0, 33, 24);
 
-    configSetting = new QSettings(WF_DIR+"\\Config.ini", QSettings::IniFormat);
+    QFont font = QFont("Microsoft YaHei");
+    font.setPixelSize(14);
+
+    configSetting = new QSettings(WF_CONF_DIR+"\\Config.ini", QSettings::IniFormat);
 
     IPLabel = new QLabel(this);
     IPLabel->setGeometry(35, 80, 100, 25);
     IPLabel->setText("IP: ");
-    IPLabel->setFont(QFont("Microsoft Yahei", 12));
+    IPLabel->setFont(font);
     PortLabel = new QLabel(this);
     PortLabel->setGeometry(35, 145, 100, 25);
     PortLabel->setText("Port: ");
-    PortLabel->setFont(QFont("Microsoft Yahei", 12));
+    PortLabel->setFont(font);
 
     IPLineEdit = new QLineEdit(this);
     IPLineEdit->setGeometry(130, 80, 100, 25);
-    IPLineEdit->setFont(QFont("Microsoft Yahei", 12));
-    IPLineEdit->setText(configSetting->value("Network/SERVER_IP", "10.13.3.23").toString());
+    IPLineEdit->setFont(font);
+    IPLineEdit->setText(configSetting->value("Network/SERVER_IP", WF_SERVER_IP).toString());
     PortLineEdit = new QLineEdit(this);
     PortLineEdit->setGeometry(130, 145, 100, 25);
-    PortLineEdit->setFont(QFont("Microsoft Yahei", 12));
-    PortLineEdit->setText(configSetting->value("Network/SERVER_PORT", "6688").toString());
+    PortLineEdit->setFont(font);
+    PortLineEdit->setText(configSetting->value("Network/SERVER_PORT", WF_SERVER_PORT).toString());
 
     ModifyBtn = new QPushButton(this);
     ModifyBtn->setGeometry(50, 235, 180, 35);
-    ModifyBtn->setFont(QFont("Microsoft Yahei", 10));
+    ModifyBtn->setFont(font);
     ModifyBtn->setText("保存配置");
     ModifyBtn->setStyleSheet("background: rgb(7, 193, 96); border-radius:4px; color:rgb(255, 255, 255);outset;");
 
@@ -152,13 +157,17 @@ void WF_LoginSettingWin::paintEvent(QPaintEvent *event)
 {
     Q_UNUSED(event)
 
+    QFont font = QFont("Microsoft YaHei");
+    font.setPixelSize(13);
+
     QPainter painter(this);
     painter.setPen(Qt::NoPen);
     painter.setBrush(QBrush(QColor(255, 255, 255)));
     painter.drawRoundedRect(0, 0, 280, 320, 0, 0);
     painter.setPen(QPen(Qt::gray));
-    painter.setFont(QFont("Microsoft Yahei", 10));
-    painter.drawText(QRect(8, 7, 50, 20), "WeFish");
+    painter.setFont(font);
+    QString ver_str = WF_VERSION;
+    painter.drawText(QRect(8, 7, 200, 20), "WeFish " + ver_str);
 }
 
 
@@ -185,41 +194,44 @@ WF_LoginRegisterWin::WF_LoginRegisterWin(QWidget * parent) : WF_BaseWin(nullptr)
     this->setMaximumSize(440, 270);
     this->CloseButton->setGeometry(407, 0, 33, 24);
 
-    configSetting = new QSettings(WF_DIR+"\\Config.ini", QSettings::IniFormat);
+    QFont font = QFont("Microsoft YaHei");
+    font.setPixelSize(14);
+
+    configSetting = new QSettings(WF_CONF_DIR+"\\Config.ini", QSettings::IniFormat);
 
     NameLabel = new QLabel(this);
     NameLabel->setGeometry(160, 50, 120, 25);
     NameLabel->setText("Name: ");
-    NameLabel->setFont(QFont("Microsoft Yahei", 12));
+    NameLabel->setFont(font);
     PasswordLabel = new QLabel(this);
     PasswordLabel->setGeometry(160, 95, 120, 25);
     PasswordLabel->setText("Password: ");
-    PasswordLabel->setFont(QFont("Microsoft Yahei", 12));
+    PasswordLabel->setFont(font);
     CodeLabel = new QLabel(this);
     CodeLabel->setGeometry(160, 140, 120, 25);
     CodeLabel->setText("InviteCode: ");
-    CodeLabel->setFont(QFont("Microsoft Yahei", 12));
+    CodeLabel->setFont(font);
 
     NameLineEdit = new QLineEdit(this);
     NameLineEdit->setGeometry(260, 50, 130, 25);
-    NameLineEdit->setFont(QFont("Microsoft Yahei", 12));
+    NameLineEdit->setFont(font);
     PasswordLineEdit = new QLineEdit(this);
     PasswordLineEdit->setGeometry(260, 95, 130, 25);
-    PasswordLineEdit->setFont(QFont("Microsoft Yahei", 12));
+    PasswordLineEdit->setFont(font);
     PasswordLineEdit->setEchoMode(QLineEdit::Password);
     CodeLineEdit = new QLineEdit(this);
     CodeLineEdit->setGeometry(260, 140, 130, 25);
-    CodeLineEdit->setFont(QFont("Microsoft Yahei", 12));
+    CodeLineEdit->setFont(font);
 
     ChooseIconBtn = new QPushButton(this);
     ChooseIconBtn->setGeometry(50, 135, 80, 20);
-    ChooseIconBtn->setFont(QFont("Microsoft Yahei", 10));
+    ChooseIconBtn->setFont(font);
     ChooseIconBtn->setText("修改头像");
     ChooseIconBtn->setStyleSheet("background: rgb(255, 255, 255); border-radius:4px; color:rgb(67, 104, 149);outset;");
 
     RegisterBtn = new QPushButton(this);
     RegisterBtn->setGeometry(130, 200, 180, 35);
-    RegisterBtn->setFont(QFont("Microsoft Yahei", 10));
+    RegisterBtn->setFont(font);
     RegisterBtn->setText("注册");
     RegisterBtn->setStyleSheet("background: rgb(7, 193, 96); border-radius:4px; color:rgb(255, 255, 255);outset;");
 
@@ -231,12 +243,15 @@ void WF_LoginRegisterWin::paintEvent(QPaintEvent *event)
 {
     Q_UNUSED(event)
 
+    QFont font = QFont("Microsoft YaHei");
+    font.setPixelSize(13);
+
     QPainter painter(this);
     painter.setPen(Qt::NoPen);
     painter.setBrush(QBrush(QColor(255, 255, 255)));
     painter.drawRoundedRect(0, 0, 440, 270, 0, 0);
     painter.setPen(QPen(Qt::gray));
-    painter.setFont(QFont("Microsoft Yahei", 10));
+    painter.setFont(font);
     painter.drawText(QRect(8, 7, 50, 20), "WeFish");
 
     if (UserIconUrl == "") {
@@ -276,26 +291,29 @@ WF_LoginSwitchWin::WF_LoginSwitchWin(QWidget * parent) : WF_BaseWin(nullptr)
     this->setMaximumSize(320, 210);
     this->CloseButton->setGeometry(287, 0, 33, 24);
 
+    QFont font = QFont("Microsoft YaHei");
+    font.setPixelSize(14);
+
     AccountLabel = new QLabel(this);
     AccountLabel->setGeometry(40, 50, 120, 25);
     AccountLabel->setText("Account: ");
-    AccountLabel->setFont(QFont("Microsoft Yahei", 12));
+    AccountLabel->setFont(font);
     PasswordLabel = new QLabel(this);
     PasswordLabel->setGeometry(40, 100, 120, 25);
     PasswordLabel->setText("Password: ");
-    PasswordLabel->setFont(QFont("Microsoft Yahei", 12));
+    PasswordLabel->setFont(font);
 
     AccountLineEdit = new QLineEdit(this);
     AccountLineEdit->setGeometry(140, 50, 130, 25);
-    AccountLineEdit->setFont(QFont("Microsoft Yahei", 12));
+    AccountLineEdit->setFont(font);
     PasswordLineEdit = new QLineEdit(this);
     PasswordLineEdit->setGeometry(140, 100, 130, 25);
-    PasswordLineEdit->setFont(QFont("Microsoft Yahei", 12));
+    PasswordLineEdit->setFont(font);
     PasswordLineEdit->setEchoMode(QLineEdit::Password);
 
     SwitchBtn = new QPushButton(this);
     SwitchBtn->setGeometry(70, 150, 180, 35);
-    SwitchBtn->setFont(QFont("Microsoft Yahei", 10));
+    SwitchBtn->setFont(font);
     SwitchBtn->setText("切换用户");
     SwitchBtn->setStyleSheet("background: rgb(7, 193, 96); border-radius:4px; color:rgb(255, 255, 255);outset;");
 
@@ -306,12 +324,15 @@ void WF_LoginSwitchWin::paintEvent(QPaintEvent *event)
 {
     Q_UNUSED(event)
 
+    QFont font = QFont("Microsoft YaHei");
+    font.setPixelSize(13);
+
     QPainter painter(this);
     painter.setPen(Qt::NoPen);
     painter.setBrush(QBrush(QColor(255, 255, 255)));
     painter.drawRoundedRect(0, 0, 320, 210, 0, 0);
     painter.setPen(QPen(Qt::gray));
-    painter.setFont(QFont("Microsoft Yahei", 10));
+    painter.setFont(font);
     painter.drawText(QRect(8, 7, 50, 20), "WeFish");
 }
 

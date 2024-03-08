@@ -11,6 +11,7 @@
 #include <QHostAddress>
 #include <QTcpSocket>
 #include <QNetworkProxy>
+
 #include "common/jsonrpcpp.h"
 #include "common/wf_message.h"
 #include "wf_misc.h"
@@ -44,54 +45,50 @@ private:
     QByteArray contents_;
 };
 
-class WF_FileSocket : public QTcpSocket
+
+class WF_FileSocket : public QObject
 {
     Q_OBJECT
 public:
-    WF_FileSocket(QString ip, int port, Cryptor& cryptor);
+    WF_FileSocket(QString ip, int port);
     ~WF_FileSocket();
 
-    void Initialise();
     void doConnect();
     void doDisConnect();
-    void doSayhello(int account, QString clientversion);
-    void doUpgradeRequest();
-    void doSend(QString msg);
+
+public slots:
+    void sInitialise();
+    void sReconnect(QString ip, int port);
+    void sUpgradeRequest(int code);
+    void sSendFile(int account, QString name, int to_account, QString file_path);
 
 signals:
     void eConnected();
     void eUnconnected();
-    void eAccountCheckin(int account);
     void eSayHello(int others_account, QString others_name, QPixmap others_icon);
-    void eOnline(int others_account, QString others_name, QPixmap others_icon);
-    void eOffline(int others_account, QString others_name);
-    void eNotify(int sender_account, QString sender_name, QPixmap sender_icon, int to_account, QString content, QString content_type);
-    void applicationshutdown(ShutDownReason reason);
-    void servershutdown(ShutDownReason reason);
-    void eRegistered(int status_code, QString account, QString password);
-    void eExpired(int status_code, QString new_invite_code);
-    void eRejected(int status_code);
-    void eValidate(int status_code, int account, QString name, QString icon);
-    void eInvalidate(int status_code);
     void eVersionExpired();
+    void eVersionLatest();
+    void eSendFinished(QString response);
+    void eNotify(int sender_account, QString sender_name, QPixmap sender_icon, int to_account, QString content, QString content_type);
     void eUpgradeProgressChanged(int percent);
 
 private:
-    QTcpSocket *socket;
+    QTcpSocket *socket = NULL;
     QString ip_;
     int port_;
     int account_;
-    QString name_ = "";
-    Cryptor& cryptor_;
     QString key_; // Cryptor Key
+    Cryptor cryptor_;
     QString rest_msg_ = "";
     QMap<QString, QSharedPointer<FileStream>> container_;
     QSharedPointer<FileStream> upgrade_stream_ = nullptr;
+    QString account_dir_str_;
 
+    void doVersionCheck(QString clientversion);
+    void doSayHello(int account);
     void doRead();
     void doMessageReceived(QString const &msg);
     void doStateChange(QAbstractSocket::SocketState state);
-
     void doUpgradeFileTransfer();
 };
 

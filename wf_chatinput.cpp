@@ -16,7 +16,9 @@
 WF_ChatInput::WF_ChatInput(QWidget *parent) : QTextEdit(parent)
 {
     this->setStyleSheet("background: rgb(245,245,245); border:0px");
-    this->setFont(QFont("Microsoft YaHei", 12));
+    QFont font = QFont("Microsoft Yahei");
+    font.setPixelSize(15);
+    this->setFont(font);
 }
 
 WF_ChatInput::~WF_ChatInput()

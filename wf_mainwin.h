@@ -29,6 +29,9 @@ public:
 
     void paintEvent(QPaintEvent *event);
 
+signals:
+    void eSendFile(int account, QString name, int to_account, QString file_path);
+
 protected:
     void mousePressEvent(QMouseEvent *event) {
         if (event->button() == Qt::LeftButton) {
@@ -114,6 +117,7 @@ private:
 private slots:
     void Send();
     void doSendFile();
+    void sSendFinished(QString response);
     void Flush(UserItemData itemdata);
     void ApplicationShutDown(ShutDownReason reason);
     void PictureBrowser(QPixmap pic);

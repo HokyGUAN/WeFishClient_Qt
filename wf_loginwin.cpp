@@ -48,35 +48,49 @@ WF_LoginWin::WF_LoginWin(QWidget *parent, QSize* frameSize)
     LoginSettingWin = new WF_LoginSettingWin(this);
     LoginRegisterWin = new WF_LoginRegisterWin(this);
     LoginSwitchWin = new WF_LoginSwitchWin(this);
+    UpgraderWin = new WF_UpgraderWin(this);
     NameLabel = new QLabel(this);
 
-    WF_ConfigPath_ = WF_DIR + "\\Config.ini";
+    WF_ConfigPath_ = WF_CONF_DIR + "\\Config.ini";
     configSetting = new QSettings(WF_ConfigPath_, QSettings::IniFormat);
 
     doSetupNetwork();
 
     QString FileSocketIP = configSetting->value("Network/SERVER_IP", WF_SERVER_IP).toString();
     int FileSocketPort = configSetting->value("Network/SERVER_PORT", WF_SERVER_PORT).toInt();
-    int FileSocketAccount = configSetting->value("User/ACCOUNT", 0).toInt();
-    FileSocket = new WF_FileSocket(FileSocketIP, FileSocketPort + 1, cryptor_);
-    UpgraderWin = new WF_UpgraderWin(this, FileSocket);
-    FileSocket->doSayhello(FileSocketAccount, WF_VERSION);
+
+    FileTransferTask_ = new QThread;
+    FileSocket = new WF_FileSocket(FileSocketIP, FileSocketPort + 1);
+    FileSocket->moveToThread(FileTransferTask_);
+    connect(FileTransferTask_, &QThread::started, FileSocket, &WF_FileSocket::sInitialise);
+    connect(this, SIGNAL(eReInitFileSocket(QString, int)), FileSocket, SLOT(sReconnect(QString, int)));
+    connect(this, SIGNAL(eUpgradeRequest(int)), FileSocket, SLOT(sUpgradeRequest(int)));
+    FileTransferTask_->start();
+    connect(FileSocket, SIGNAL(eVersionExpired()), this, SLOT(sVersionExpired()));
+    connect(FileSocket, SIGNAL(eVersionLatest()), this, SLOT(sVersionLatest()));
+    connect(FileSocket, SIGNAL(eUpgradeProgressChanged(int)), UpgraderWin, SLOT(sProgressUpdate(int)));
 
     LoginButton = new QPushButton(this);
     LoginButton->setGeometry((frameSize_->width() - 180) / 2, 265, 180, 35);
-    LoginButton->setFont(QFont("Microsoft Yahei", 11));
+    QFont login_btn_font = QFont("Microsoft Yahei");
+    login_btn_font.setPixelSize(15);
+    LoginButton->setFont(login_btn_font);
     LoginButton->setText("进入微娱");
     LoginButton->setStyleSheet("background: rgb(7, 193, 96); border-radius:4px; color:rgb(255, 255, 255);outset;");
 
     UserSwitch = new QPushButton(this);
     UserSwitch->setGeometry(60, 320, 80, 20);
-    UserSwitch->setFont(QFont("Microsoft Yahei", 10));
+    QFont switch_btn_font = QFont("Microsoft Yahei");
+    switch_btn_font.setPixelSize(14);
+    UserSwitch->setFont(switch_btn_font);
     UserSwitch->setText("切换用户");
     UserSwitch->setStyleSheet("background: rgb(255, 255, 255); border-radius:4px; color:rgb(67, 104, 149);outset;");
 
     UserRegister = new QPushButton(this);
     UserRegister->setGeometry(140, 320, 80, 20);
-    UserRegister->setFont(QFont("Microsoft Yahei", 10));
+    QFont register_btn_font = QFont("Microsoft Yahei");
+    register_btn_font.setPixelSize(14);
+    UserRegister->setFont(register_btn_font);
     UserRegister->setText("注册账号");
     UserRegister->setStyleSheet("background: rgb(255, 255, 255); border-radius:4px; color:rgb(67, 104, 149);outset;");
 
@@ -89,8 +103,6 @@ WF_LoginWin::WF_LoginWin(QWidget *parent, QSize* frameSize)
     connect(LoginSettingWin, SIGNAL(eUpdateNetworkConfig()), this, SLOT(sUpdateNetworkConfig()));
     connect(LoginRegisterWin, SIGNAL(eUserRegister(QString, QString, QString, QString)), this, SLOT(sUserRegister(QString, QString, QString, QString)));
     connect(LoginSwitchWin, SIGNAL(eUserSwitch(QString, QString)), this, SLOT(sUserSwitch(QString, QString)));
-
-    connect(FileSocket, SIGNAL(eVersionExpired()), this, SLOT(sVersionExpired()));
 }
 
 WF_LoginWin::~WF_LoginWin()
@@ -106,7 +118,9 @@ void WF_LoginWin::paintEvent(QPaintEvent *event)
     painter.setBrush(QBrush(QColor(253, 254, 254)));
     painter.drawRoundedRect(0, 0, frameSize_->width(), frameSize_->height(), 7, 7);
     painter.setPen(QPen(Qt::gray));
-    painter.setFont(QFont("Microsoft Yahei", 10));
+    QFont font = QFont("Microsoft Yahei");
+    font.setPixelSize(13);
+    painter.setFont(font);
     painter.drawText(QRect(8, 7, 50, 20), "WeFish");
 
     if (UserIconUrl == "") {
@@ -116,7 +130,8 @@ void WF_LoginWin::paintEvent(QPaintEvent *event)
     painter.drawPixmap(QRect((frameSize_->width() - 80) / 2, 80, 80, 80), *UserIcon);
 
     if (host_name_ != "") {
-        QFont nameFont("Microsoft Yahei", 16);
+        QFont nameFont("Microsoft Yahei");
+        nameFont.setPixelSize(21);
         QFontMetrics font_matrics(nameFont);
         int name_width = font_matrics.width(host_name_);
         int name_height = font_matrics.lineSpacing();
@@ -131,18 +146,18 @@ void WF_LoginWin::doSetupNetwork()
     ip_ = configSetting->value("Network/SERVER_IP", WF_SERVER_IP).toString();
     port_ = configSetting->value("Network/SERVER_PORT", WF_SERVER_PORT).toInt();
 
-    if (ip_ != "" && port_ != 0) {
-        qDebug() << "Server IP: " + ip_;
-        qDebug() << "Server Port: " + QString::number(port_);
-        MainSocket = new WF_MainSocket(ip_, port_, cryptor_);
-        connect(MainSocket, SIGNAL(eConnected()), this, SLOT(sConnected()));
-        connect(MainSocket, SIGNAL(eUnconnected()), this, SLOT(sUnconnected()));
-        connect(MainSocket, SIGNAL(eRegistered(int, QString, QString)), this, SLOT(sRegistered(int, QString, QString)));
-        connect(MainSocket, SIGNAL(eExpired(int, QString)), this, SLOT(sExpired(int, QString)));
-        connect(MainSocket, SIGNAL(eRejected(int)), this, SLOT(sRejected(int)));
-        connect(MainSocket, SIGNAL(eValidate(int, int, QString, QString)), this, SLOT(sValidate(int, int, QString, QString)));
-        connect(MainSocket, SIGNAL(eInvalidate(int)), this, SLOT(sInvalidate(int)));
-    }
+    qDebug() << "Server IP: " + ip_;
+    qDebug() << "Server Port: " + QString::number(port_);
+    MainSocket = new WF_MainSocket(ip_, port_, cryptor_);
+    connect(MainSocket, SIGNAL(eConnected()), this, SLOT(sConnected()));
+    connect(MainSocket, SIGNAL(eUnconnected()), this, SLOT(sUnconnected()));
+    connect(MainSocket, SIGNAL(eRegistered(int, QString, QString)), this, SLOT(sRegistered(int, QString, QString)));
+    connect(MainSocket, SIGNAL(eExpired(int, QString)), this, SLOT(sExpired(int, QString)));
+    connect(MainSocket, SIGNAL(eRejected(int)), this, SLOT(sRejected(int)));
+    connect(MainSocket, SIGNAL(eValidate(int, int, QString, QString)), this, SLOT(sValidate(int, int, QString, QString)));
+    connect(MainSocket, SIGNAL(eInvalidate(int)), this, SLOT(sInvalidate(int)));
+
+    emit eReInitFileSocket(ip_, port_ + 1);
 }
 
 void WF_LoginWin::doVaildate()
@@ -183,11 +198,14 @@ void WF_LoginWin::doLogin()
     }
     MainSocket->doSayhello(account_);
     MainWin = new WF_MainWin(this, this->MainSocket, this->FileSocket, UserIconUrl);
+    connect(MainWin, SIGNAL(eSendFile(int, QString, int, QString)), FileSocket, SLOT(sSendFile(int, QString, int, QString)));
+    connect(FileSocket, SIGNAL(eSendFinished(QString)), MainWin, SLOT(sSendFinished(QString)));
     MainWin->setGeometry((mainMonitorSize_->width() - mainWinSize_->width()) / 2,
                          (mainMonitorSize_->height() - mainWinSize_->height()) / 2,
                          mainWinSize_->width(),
                          mainWinSize_->height());
     this->hide();
+//    this->close();
     MainWin->show();
 }
 
@@ -275,11 +293,12 @@ void WF_LoginWin::sValidate(int status_code, int account, QString name, QString 
     qDebug() << "Validate - Status Code: " << status_code;
     qDebug() << "Name: " << name;
     QPixmap image = ImageHandler->Base64ToImage(icon.toUtf8());
-    image.save(WF_DIR + "\\Self.jpg");
-    UserIconUrl = WF_DIR + "\\Self.jpg";
+    image.save(WF_ALL_DIR + "\\pcache", "JPEG");
+    UserIconUrl = WF_ALL_DIR + "\\pcache";
     account_ = account;
     host_name_ = name;
     account_validated_ = true;
+    emit eUpgradeRequest(account_);
     this->update();
 }
 
@@ -299,5 +318,11 @@ void WF_LoginWin::sVersionExpired()
     this->hide();
     UpgraderWin->setGeometry(this->pos().rx() - 100, this->pos().ry(), 500, 300);
     UpgraderWin->show();
-    UpgraderWin->doUpgradeRequest();
+    emit eUpgradeRequest(0);
+}
+
+void WF_LoginWin::sVersionLatest()
+{
+    qDebug() << "Version Latest!!!";
+    version_expired_ = false;
 }

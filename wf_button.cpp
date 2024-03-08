@@ -16,7 +16,9 @@ WF_Button::WF_Button(QWidget *parent, QString name, bool menu)
     , menu_flag(menu)
 {
     this->setText(name);
-    this->setFont(QFont("Microsoft Yahei", 10));
+    QFont font = QFont("Microsoft Yahei");
+    font.setPixelSize(13);
+    this->setFont(font);
     this->setStyleSheet("QPushButton{background-color:rgb(248, 248, 248);border-radius:2px;color:rgb(7, 193, 96);outset;}");
 
     if (menu_flag) {

@@ -11,6 +11,7 @@
 #include <QWidget>
 #include <QLineEdit>
 #include <QPushButton>
+#include <QThread>
 
 #include "wf_mainwin.h"
 #include "wf_filesocket.h"
@@ -33,6 +34,10 @@ public:
     void doRegister();
 
     void doVaildate();
+
+signals:
+    void eUpgradeRequest(int code);
+    void eReInitFileSocket(QString ip, int port);
 
 protected:
     QPoint offset_;
@@ -79,6 +84,8 @@ private:
     QString key_;
     Cryptor cryptor_;
 
+    QThread* FileTransferTask_;
+
     WF_LoginCloseButton* LoginCloseButton;
     WF_LoginSettingButton* LoginSettingButton;
 
@@ -112,6 +119,7 @@ private slots:
     void sInvalidate(int status_code);
 
     void sVersionExpired();
+    void sVersionLatest();
 };
 
 
